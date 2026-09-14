@@ -146,8 +146,9 @@ Weave recognizes:
 
 - Git status, diff, log, branch, stash, fetch, pull, push, add, and commit;
 - `rg`, `grep`, directory listings, `find`, and `fd`;
-- JavaScript, Python, Rust, Go, .NET, Java, Jest, and Vitest test commands;
-- builds, linters, package managers, Docker, Kubernetes, Terraform, and system logs;
+- JavaScript, Python, Rust, Go, .NET, Java, Ruby (RSpec, Rake), Jest, Vitest, and Playwright test commands;
+- builds, linters, formatters (Prettier), package managers (npm/pnpm/yarn/bun/pip/cargo, including `outdated`/`list`), Docker, Kubernetes, Terraform, and system logs;
+- GitHub CLI (`gh pr`, `gh run`, `gh issue` condensed; `gh api` kept verbatim as structured JSON);
 - long repetitive output through a conservative fallback.
 
 Small output passes through. If a reduced report would be as large as the original output, Weave returns the original output and records zero savings. Failed commands remain complete. File reads, pagers, head/tail, `sed`, and explicit JSON output remain verbatim. Each captured stream is capped at 20 MB.
@@ -269,6 +270,20 @@ claude plugin install weave@weave --scope project
 node bin/weave.js doctor
 ```
 
+### Standalone (no Claude Code or Codex)
+
+The package has no runtime dependency and is npm-packagable for agents and editors that use neither plugin marketplace. It is not yet published to the npm registry; install locally from a clone:
+
+```bash
+git clone https://github.com/GabrielKqw/weave.git
+cd weave
+npm pack
+npm install --global ./weave-agent-workflow-0.4.0.tgz
+weave doctor
+```
+
+Then either call `weave exec -- <command>` yourself or point an MCP client at `mcp/server.js` (see [MCP server](#mcp-server)).
+
 ## Configuration
 
 ```bash
@@ -276,9 +291,12 @@ node bin/weave.js mode
 node bin/weave.js mode ultra
 node bin/weave.js doctor
 node bin/weave.js gain
+node bin/weave.js gain --history
 node bin/weave.js discover
 node bin/weave.js recall <run-id>
 ```
+
+`gain --history` lists every recorded run (timestamp, kind, exit code, original vs. presented bytes, redacted command) instead of just the aggregate.
 
 `discover` reads this project's local Claude Code session transcripts (`~/.claude/projects/<slug>/*.jsonl`), finds Bash commands that ran without the Weave wrapper (mode was off, or the session predates installation), and replays their recorded output through the current filters to estimate missed savings. It never prints raw commands or output — only byte counts grouped by command kind. If no transcript directory exists (Codex-only projects, CI, fresh installs) it says so and exits cleanly.
 

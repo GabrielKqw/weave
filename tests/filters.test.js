@@ -25,6 +25,20 @@ test('classify() recognizes the initial command families', () => {
   assert.equal(filters.classify('kubectl get pods -o json'), 'passthrough');
 });
 
+test('classify() recognizes playwright, rspec, rake test, prettier, and gh', () => {
+  assert.equal(filters.classify('playwright test'), 'test');
+  assert.equal(filters.classify('npx playwright test'), 'test');
+  assert.equal(filters.classify('rspec spec/'), 'test');
+  assert.equal(filters.classify('bundle exec rspec'), 'test');
+  assert.equal(filters.classify('rake test'), 'test');
+  assert.equal(filters.classify('prettier --check .'), 'summary');
+  assert.equal(filters.classify('npx prettier --check .'), 'summary');
+  assert.equal(filters.classify('pnpm outdated'), 'summary');
+  assert.equal(filters.classify('gh pr view 42'), 'summary');
+  assert.equal(filters.classify('gh run list'), 'summary');
+  assert.equal(filters.classify('gh api repos/foo/bar'), 'passthrough');
+});
+
 test('classify() falls back to generic for chained/piped commands', () => {
   assert.equal(filters.classify('git status && git diff'), 'generic');
   assert.equal(filters.classify('pytest | tee out.log'), 'generic');

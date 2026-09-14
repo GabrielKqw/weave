@@ -60,16 +60,28 @@ function classify(command) {
   if (hasShellOperators) return 'generic';
   if (/\s(--json|--format[= ]json|-o[= ]json)\b/i.test(c)) return 'passthrough';
   if (/^(cat|type|more|less|head|tail|sed|Get-Content)\b/i.test(c)) return 'passthrough';
+  if (/^gh\s+api\b/.test(c)) return 'passthrough';
   if (/^git\s+status\b/.test(c)) return 'git-status';
   if (/^git\s+diff\b/.test(c)) return 'git-diff';
   if (/^git\s+log\b/.test(c)) return 'git-log';
   if (/^git\s+(branch|stash|fetch|pull|push|add|commit)\b/.test(c)) return 'summary';
   if (/^(rg|grep)\b/.test(c)) return 'grep';
-  if (/^(pytest|python\s+-m\s+pytest|(?:npm|pnpm|yarn|bun)(?:\s+run)?\s+test\b|cargo\s+test\b|dotnet\s+test\b|go\s+test\b|mvn(?:w)?\s+test\b|gradle(?:w)?\s+test\b|jest\b|npx\s+(?:jest|vitest)\b|vitest\b)/.test(c)) {
+  if (
+    /^(pytest|python\s+-m\s+pytest|(?:npm|pnpm|yarn|bun)(?:\s+run)?\s+test\b|cargo\s+test\b|dotnet\s+test\b|go\s+test\b|mvn(?:w)?\s+test\b|gradle(?:w)?\s+test\b|jest\b|npx\s+(?:jest|vitest|playwright)\b|vitest\b|playwright\s+test\b|(?:bundle\s+exec\s+)?rspec\b|(?:bundle\s+exec\s+)?rake\s+test\b)/.test(
+      c
+    )
+  ) {
     return 'test';
   }
-  if (/^(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?(?:build|lint|check|format)\b|^cargo\s+(?:build|check|clippy|fmt)\b|^dotnet\s+(?:build|format)\b|^go\s+(?:build|vet|fmt)\b|^(?:make|cmake|mvnw?|gradlew?)\b/.test(c)) return 'summary';
-  if (/^(?:npm|pnpm|yarn|bun)\s+(?:i|install|add)\b|^(?:pip|pip3)\s+install\b|^cargo\s+install\b/.test(c)) return 'summary';
+  if (
+    /^(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?(?:build|lint|check|format)\b|^cargo\s+(?:build|check|clippy|fmt)\b|^dotnet\s+(?:build|format)\b|^go\s+(?:build|vet|fmt)\b|^(?:make|cmake|mvnw?|gradlew?)\b|^(?:npx\s+)?prettier\b/.test(
+      c
+    )
+  ) {
+    return 'summary';
+  }
+  if (/^(?:npm|pnpm|yarn|bun)\s+(?:i|install|add|outdated|list|ls)\b|^(?:pip|pip3)\s+install\b|^cargo\s+install\b/.test(c)) return 'summary';
+  if (/^gh\s+(?:pr|run|issue)\s+\w+/.test(c)) return 'summary';
   if (/^(?:ls|dir|tree|find|fd)\b/i.test(c)) return 'listing';
   if (/^(?:docker(?:\s+compose)?|kubectl|terraform|journalctl)\b/.test(c)) {
     return /\b(logs?|events?)\b/.test(c) ? 'logs' : 'summary';

@@ -1,14 +1,23 @@
 {
   "name": "weave-agent-workflow",
   "version": "0.4.0",
-  "private": true,
   "description": "Minimal workflow and terminal intelligence for Claude Code and Codex.",
+  "keywords": ["orchestration", "context", "workflow", "terminal", "verification", "mcp", "agent"],
   "author": "Gabriel Costa",
   "license": "MIT",
+  "homepage": "https://github.com/GabrielKqw/weave",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GabrielKqw/weave.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GabrielKqw/weave/issues"
+  },
   "type": "commonjs",
   "bin": {
     "weave": "bin/weave.js"
   },
+  "files": ["bin", "core", "hooks", "skills", "mcp", "commands", ".claude-plugin", ".codex-plugin", "README.md", "LICENSE"],
   "scripts": {
     "test": "node --test tests/*.test.js",
     "benchmark": "node scripts/benchmark.js",
