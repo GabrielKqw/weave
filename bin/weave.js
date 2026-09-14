@@ -7,6 +7,7 @@ const { spawnSync } = require('child_process');
 const execCore = require('../core/exec');
 const storage = require('../core/storage');
 const modes = require('../core/mode');
+const discover = require('../core/discover');
 
 const PLUGIN_ROOT = path.join(__dirname, '..');
 
@@ -89,6 +90,35 @@ function cmdGain() {
   process.stdout.write(`Tokens saved (approx, 4 bytes/token): ~${approxTokensSaved}\n`);
   process.stdout.write('\nThis compares captured stdout/stderr with the complete Weave report.\n');
   process.stdout.write('It does not estimate total context, session cost, or API spend.\n');
+}
+
+function cmdDiscover() {
+  const result = discover.scan({ cwd: process.cwd() });
+  if (!result.found) {
+    process.stdout.write(`No Claude Code session history found for this project at ${result.dir}\n`);
+    process.stdout.write('Nothing to analyze yet - run some sessions first, or this project only uses Codex.\n');
+    return;
+  }
+  if (result.analyzed === 0) {
+    process.stdout.write(`Scanned ${result.files} session file(s), found no unwrapped Bash commands with recorded output.\n`);
+    return;
+  }
+  const missed = Math.max(0, result.originalBytes - result.presentedBytes);
+  const approxTokens = Math.round(missed / 4);
+  process.stdout.write('Weave discover - missed reduction in past sessions not wrapped by Weave\n');
+  process.stdout.write('----------------------------------------------------------------------\n');
+  process.stdout.write(`Session files scanned:     ${result.files}\n`);
+  process.stdout.write(`Unwrapped commands found:  ${result.analyzed}\n`);
+  process.stdout.write(`Raw output bytes:          ${result.originalBytes}\n`);
+  process.stdout.write(`Estimated after reduction: ${result.presentedBytes}\n`);
+  process.stdout.write(`Estimated missed savings:  ${missed} bytes (~${approxTokens} tokens)\n`);
+  const kinds = Object.entries(result.byKind).sort((a, b) => b[1] - a[1]);
+  if (kinds.length) {
+    process.stdout.write('\nBy command type (estimated bytes missed):\n');
+    for (const [kind, bytes] of kinds) process.stdout.write(`  ${kind.padEnd(12)} ${bytes}\n`);
+  }
+  process.stdout.write('\nThese commands ran before Weave was active, or outside its wrapper (e.g. mode off).\n');
+  process.stdout.write('Estimates replay recorded output through the current filters; they are not measured token billing.\n');
 }
 
 function cmdMode(argv) {
@@ -189,12 +219,14 @@ function main() {
       return cmdRecall(rest);
     case 'gain':
       return cmdGain(rest);
+    case 'discover':
+      return cmdDiscover(rest);
     case 'mode':
       return cmdMode(rest);
     case 'doctor':
       return cmdDoctor(rest);
     default:
-      process.stdout.write('Usage: weave <doctor|mode [off|lite|full|ultra]|gain|recall <id>|exec -- <command>>\n');
+      process.stdout.write('Usage: weave <doctor|mode [off|lite|full|ultra]|gain|discover|recall <id>|exec -- <command>>\n');
       process.exitCode = cmd ? 2 : 0;
   }
 }
