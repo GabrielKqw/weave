@@ -20,7 +20,5 @@ jobs:
           node-version: 20
       - name: Test
         run: npm test
-        env:
-          WEAVE_BASH: ${{ runner.os == 'Windows' && 'C:\Program Files\Git\bin\bash.exe' || 'bash' }}
       - name: Doctor
         run: node bin/weave.js doctor
