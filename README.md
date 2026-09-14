@@ -13,7 +13,7 @@ Minimal engineering policy, terminal intelligence, context continuity, and verif
 [![CI](https://github.com/GabrielKqw/weave/actions/workflows/ci.yml/badge.svg)](https://github.com/GabrielKqw/weave/actions/workflows/ci.yml)
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/runtime_dependencies-0-111111)
-![Version](https://img.shields.io/badge/version-0.3.0-2563eb)
+![Version](https://img.shields.io/badge/version-0.3.2-2563eb)
 
 </div>
 
@@ -292,4 +292,6 @@ The direction was informed by the public work of [Ponytail](https://github.com/D
 
 ## License
 
-No license has been declared. All rights remain with the copyright holder until a license is added.
+Created by **Gabriel Costa**. Contact: [LinkedIn](https://www.linkedin.com/in/gabriel-costa-940b89276/) or Discord `tanjas1`.
+
+Licensed under the [MIT License](LICENSE).

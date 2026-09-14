@@ -3,7 +3,7 @@
   "name": "weave",
   "description": "Weave: a lightweight orchestration layer that connects coding agents, project context, terminal tools and verification.",
   "owner": {
-    "name": "Weave contributors"
+    "name": "Gabriel Costa"
   },
   "plugins": [
     {
