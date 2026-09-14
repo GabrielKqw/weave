@@ -36,9 +36,10 @@ function shouldWrap(toolInput) {
   return true;
 }
 
-function buildWrappedCommand(originalCommand, weaveJsPath) {
+function buildWrappedCommand(originalCommand, weaveJsPath, cwd) {
   const jsPath = toGitBashPath(weaveJsPath);
-  return `${SENTINEL} node ${shellQuoteSingle(jsPath)} exec -- ${shellQuoteSingle(originalCommand)}`;
+  const cwdArg = cwd ? `--cwd ${shellQuoteSingle(cwd)} ` : '';
+  return `${SENTINEL} node ${shellQuoteSingle(jsPath)} exec ${cwdArg}-- ${shellQuoteSingle(originalCommand)}`;
 }
 
 function runCommand(command, { cwd } = {}) {

@@ -29,7 +29,7 @@ function main() {
   if (!execCore.shouldWrap(input.tool_input || {})) return;
 
   const weaveJsPath = path.join(__dirname, '..', 'bin', 'weave.js');
-  const wrapped = execCore.buildWrappedCommand(input.tool_input.command, weaveJsPath);
+  const wrapped = execCore.buildWrappedCommand(input.tool_input.command, weaveJsPath, input.cwd);
 
   const output = {
     hookSpecificOutput: {

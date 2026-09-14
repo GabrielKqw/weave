@@ -1,6 +1,6 @@
 {
   "name": "weave-agent-workflow",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "private": true,
   "description": "Minimal workflow and terminal intelligence for Claude Code and Codex.",
   "author": "Gabriel Costa",
