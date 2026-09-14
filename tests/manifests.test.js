@@ -28,6 +28,7 @@ test('.codex-plugin/plugin.json is valid and points at the shared skills dir', (
   const pkg = readJson('.codex-plugin/plugin.json');
   assert.equal(pkg.name, 'weave');
   assert.equal(pkg.skills, './skills/');
+  assert.equal(pkg.hooks, './hooks/hooks.json');
 });
 
 test('package and plugin versions agree', () => {
@@ -53,13 +54,21 @@ test('hooks/hooks.json declares a PreToolUse Bash matcher pointing at the real h
   assert.equal(handler.command, 'node');
   assert.ok(handler.args[0].endsWith('/hooks/pretooluse.js'));
   assert.ok(fs.existsSync(path.join(ROOT, 'hooks', 'pretooluse.js')));
+  for (const event of ['SessionStart', 'SubagentStart', 'UserPromptSubmit']) {
+    assert.ok(Array.isArray(hooks.hooks[event]), `expected ${event}`);
+    assert.ok(hooks.hooks[event][0].hooks[0].args[0].endsWith('/hooks/lifecycle.js'));
+  }
 });
 
-test('skills/weave/SKILL.md has valid frontmatter naming the skill "weave"', () => {
-  const text = fs.readFileSync(path.join(ROOT, 'skills', 'weave', 'SKILL.md'), 'utf8');
-  assert.ok(text.startsWith('---\n'));
-  const end = text.indexOf('\n---', 4);
-  const frontmatter = text.slice(4, end);
-  assert.match(frontmatter, /name:\s*weave/);
-  assert.match(frontmatter, /description:/);
+test('every bundled skill has matching frontmatter', () => {
+  const names = ['weave', 'weave-review', 'weave-audit', 'weave-debt', 'weave-gain', 'weave-help'];
+  for (const name of names) {
+    const file = path.join(ROOT, 'skills', name, 'SKILL.md');
+    const text = fs.readFileSync(file, 'utf8');
+    assert.ok(text.startsWith('---\n'), `${name} frontmatter start`);
+    const end = text.indexOf('\n---', 4);
+    const frontmatter = text.slice(4, end);
+    assert.match(frontmatter, new RegExp(`name:\\s*${name}`));
+    assert.match(frontmatter, /description:/);
+  }
 });

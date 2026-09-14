@@ -77,7 +77,6 @@ test('pruneOldRuns removes runs beyond maxCount, keeping the newest', () => {
 test('pruneOldRuns removes runs older than maxAgeMs regardless of count', () => {
   const cwd = tmpCwd();
   const id = storage.saveRun(cwd, { command: 'old', exitCode: 0, originalBytes: 1, presentedBytes: 1, omitted: 0 }, null);
-  // Backdate the metadata file's timestamp to simulate an old run.
   const dir = storage.runsDir(cwd);
   const metaPath = path.join(dir, `${id}.json`);
   const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
