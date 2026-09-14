@@ -11,6 +11,17 @@ const modes = require('../core/mode');
 const PLUGIN_ROOT = path.join(__dirname, '..');
 
 function cmdExec(argv) {
+  let cwd;
+  const cwdIdx = argv.indexOf('--cwd');
+  if (cwdIdx !== -1) {
+    cwd = argv[cwdIdx + 1];
+    if (!cwd) {
+      process.stderr.write('weave exec: --cwd requires a directory\n');
+      process.exitCode = 2;
+      return;
+    }
+    argv = [...argv.slice(0, cwdIdx), ...argv.slice(cwdIdx + 2)];
+  }
   const dashIdx = argv.indexOf('--');
   const command = dashIdx === -1 ? argv.join(' ') : argv.slice(dashIdx + 1).join(' ');
   if (!command.trim()) {
@@ -18,7 +29,7 @@ function cmdExec(argv) {
     process.exitCode = 2;
     return;
   }
-  const report = execCore.execAndReport(command, { cwd: process.cwd() });
+  const report = execCore.execAndReport(command, { cwd: cwd || process.cwd() });
   if (report.passthrough) {
     process.stdout.write(report.presentedStdout);
     process.stderr.write(report.presentedStderr);

@@ -63,6 +63,20 @@ test('buildWrappedCommand output is recognized as already-wrapped (recursion gua
   assert.equal(execCore.shouldWrap({ command: wrapped }), false);
 });
 
+test('wrapped execution persists under the tool cwd, not the hook process cwd', () => {
+  const processCwd = tmpCwd();
+  const toolCwd = tmpCwd();
+  const result = spawnSync(process.execPath, [
+    path.join(__dirname, '..', 'bin', 'weave.js'),
+    'exec', '--cwd', toolCwd, '--', 'echo isolated',
+  ], { cwd: processCwd, encoding: 'utf8' });
+  assert.equal(result.status, 0);
+  assert.equal(storage.listRuns(processCwd).length, 0);
+  assert.equal(storage.listRuns(toolCwd).length, 1);
+  fs.rmSync(processCwd, { recursive: true, force: true });
+  fs.rmSync(toolCwd, { recursive: true, force: true });
+});
+
 test('shouldWrap excludes background commands and empty/missing commands', () => {
   assert.equal(execCore.shouldWrap({ command: 'git status', run_in_background: true }), false);
   assert.equal(execCore.shouldWrap({}), false);

@@ -30,6 +30,7 @@ test('hook JSON protocol: rewrites an eligible Bash command with the expected sh
   assert.ok(cmd.startsWith(execCore.SENTINEL));
   assert.ok(cmd.includes('weave.js'));
   assert.ok(cmd.includes('exec --'));
+  assert.ok(cmd.includes("--cwd 'C:\\Users\\Admin\\Desktop\\Projetos\\Weave'"));
   assert.ok(cmd.includes("'git status'"));
   assert.equal(out.hookSpecificOutput.updatedInput.timeout, 120000);
   assert.equal(out.hookSpecificOutput.updatedInput.run_in_background, false);
