@@ -1,0 +1,167 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const filters = require('../core/filters');
+
+test('classify() recognizes the initial command families', () => {
+  assert.equal(filters.classify('git status'), 'git-status');
+  assert.equal(filters.classify('  git status --short'), 'git-status');
+  assert.equal(filters.classify('git diff HEAD~1'), 'git-diff');
+  assert.equal(filters.classify('git log'), 'git-log');
+  assert.equal(filters.classify('rg TODO src/'), 'grep');
+  assert.equal(filters.classify('grep -rn TODO .'), 'grep');
+  assert.equal(filters.classify('pytest tests/'), 'test');
+  assert.equal(filters.classify('npm test'), 'test');
+  assert.equal(filters.classify('npm run test'), 'test');
+  assert.equal(filters.classify('cargo test'), 'test');
+  assert.equal(filters.classify('dotnet test'), 'test');
+  assert.equal(filters.classify('ls -la'), 'generic');
+});
+
+test('classify() falls back to generic for chained/piped commands', () => {
+  assert.equal(filters.classify('git status && git diff'), 'generic');
+  assert.equal(filters.classify('pytest | tee out.log'), 'generic');
+  assert.equal(filters.classify('npm test; echo done'), 'generic');
+});
+
+test('git status filter removes only the "(use ...)" hint boilerplate', () => {
+  const raw = [
+    'On branch main',
+    'Changes not staged for commit:',
+    '  (use "git add <file>..." to update what will be committed)',
+    '  (use "git restore <file>..." to discard changes in working directory)',
+    '\tmodified:   src/app.py',
+    '',
+    'no changes added to commit (use "git add" and/or "git commit -a")',
+  ].join('\n');
+  const r = filters.filterGitStatus(raw);
+  assert.ok(!r.presented.includes('(use "git add <file>...'));
+  assert.ok(!r.presented.includes('(use "git restore'));
+  assert.ok(r.presented.includes('modified:   src/app.py'));
+  assert.ok(r.presented.includes('On branch main'));
+  assert.equal(r.omitted, 2);
+});
+
+test('git diff filter removes only the index line, keeps hunks intact', () => {
+  const raw = [
+    'diff --git a/app.py b/app.py',
+    'index e69de29..4b825dc 100644',
+    '--- a/app.py',
+    '+++ b/app.py',
+    '@@ -1,2 +1,2 @@',
+    '-def add(a, b):',
+    '-    return a - b',
+    '+def add(a, b):',
+    '+    return a + b',
+  ].join('\n');
+  const r = filters.filterGitDiff(raw);
+  assert.ok(!r.presented.includes('index e69de29'));
+  assert.ok(r.presented.includes('-    return a - b'));
+  assert.ok(r.presented.includes('+    return a + b'));
+  assert.equal(r.omitted, 1);
+});
+
+test('git log filter condenses verbose commits to one line each', () => {
+  const raw = [
+    'commit abcdef1234567890',
+    'Author: Jane Doe <jane@example.com>',
+    'Date:   Mon Jan 1 00:00:00 2026 +0000',
+    '',
+    '    First commit message',
+    '',
+    'commit 1234567abcdef00',
+    'Author: Jane Doe <jane@example.com>',
+    'Date:   Tue Jan 2 00:00:00 2026 +0000',
+    '',
+    '    Second commit message',
+    '    with a body line',
+    '',
+  ].join('\n');
+  const r = filters.filterGitLog(raw, 'git log');
+  const lines = r.presented.split('\n').filter(Boolean);
+  assert.equal(lines.length, 2);
+  assert.ok(lines[0].startsWith('abcdef1'));
+  assert.ok(lines[0].includes('First commit message'));
+  assert.ok(lines[1].includes('(+1 more line(s))'));
+});
+
+test('git log filter does not touch already-explicit formats', () => {
+  const raw = 'abc123 first\nabc456 second';
+  const r = filters.filterGitLog(raw, 'git log --oneline');
+  assert.equal(r.presented, raw);
+  assert.equal(r.omitted, 0);
+});
+
+test('grep filter groups repeated file:line matches, preserving early context', () => {
+  const lines = [];
+  for (let i = 1; i <= 8; i++) lines.push(`src/app.py:${i}:    # TODO item ${i}`);
+  const r = filters.filterGrep(lines.join('\n'), { maxPerFile: 3 });
+  assert.ok(r.presented.includes('src/app.py (8 matches)'));
+  assert.ok(r.presented.includes('1:     # TODO item 1'));
+  assert.ok(r.presented.includes('… 5 more match(es)'));
+  assert.equal(r.omitted, 5);
+});
+
+test('test-output filter: repeated passing lines collapse to the tail summary on exit 0', () => {
+  const passLines = Array.from({ length: 200 }, (_, i) => `test_thing_${i} ... ok`);
+  const raw = passLines.concat(['', '200 passed in 1.23s']).join('\n');
+  const r = filters.filterTestOutput(raw, 0);
+  assert.equal(r.failures, 'none');
+  assert.ok(r.summary.includes('200 passed'));
+  assert.ok(r.omitted > 190);
+  assert.ok(!r.presented.includes('test_thing_0 ...'));
+});
+
+test('reduceOutput preserves complete failing test output', () => {
+  const noise = Array.from({ length: 150 }, (_, i) => `test_ok_${i} PASSED`);
+  const raw = noise
+    .concat([
+      'test_math.py::test_add FAILED',
+      '',
+      'def test_add():',
+      '>       assert add(2, 3) == 999',
+      'E       AssertionError: assert 5 == 999',
+      '',
+      'test_math.py:12: AssertionError',
+      '1 failed, 150 passed in 2.0s',
+    ])
+    .join('\n');
+  const r = filters.reduceOutput('pytest', raw, 1);
+  assert.ok(r.presented.includes('test_math.py:12: AssertionError'));
+  assert.ok(r.presented.includes('AssertionError: assert 5 == 999'));
+  assert.equal(r.presented, raw);
+  assert.equal(r.omitted, 0);
+});
+
+test('reduceOutput passthrough for small unknown-command output', () => {
+  const raw = 'total 0\ndrwxr-xr-x 2 user user 4096 Jan 1 00:00 .\n';
+  const r = filters.reduceOutput('ls -la', raw, 0);
+  assert.equal(r.kind, 'passthrough');
+  assert.equal(r.presented, raw);
+  assert.equal(r.omitted, 0);
+});
+
+test('reduceOutput never reports success on a non-zero exit code', () => {
+  const raw = 'some output';
+  const r = filters.reduceOutput('some-command', raw, 1);
+  assert.notEqual(r.summary.toLowerCase(), 'ok');
+  assert.ok(r.summary.includes('1'));
+});
+
+test('truncateMiddle keeps head, tail, and any pattern match in between', () => {
+  const lines = Array.from({ length: 100 }, (_, i) => `line ${i}`);
+  lines[50] = 'ERROR: boom';
+  const { lines: kept, omitted } = filters.truncateMiddle(lines, { head: 2, tail: 2, keepPattern: /ERROR/ });
+  assert.ok(kept.includes('line 0'));
+  assert.ok(kept.includes('line 1'));
+  assert.ok(kept.includes('ERROR: boom'));
+  assert.ok(kept.includes('line 98'));
+  assert.ok(kept.includes('line 99'));
+  assert.equal(omitted, 95);
+});
+
+test('dedupeConsecutive collapses repeated lines with a count', () => {
+  const out = filters.dedupeConsecutive(['a', 'a', 'a', 'b', 'a']);
+  assert.deepEqual(out, ['a  (×3)', 'b', 'a']);
+});
