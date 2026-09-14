@@ -67,10 +67,18 @@ function cmdRecall(argv) {
   process.exitCode = meta.exitCode;
 }
 
-function cmdGain() {
+function cmdGain(argv) {
   const runs = storage.listRuns(process.cwd());
   if (runs.length === 0) {
     process.stdout.write('No recorded runs yet in .weave/runs/. Run some commands through Weave first.\n');
+    return;
+  }
+  if (argv.includes('--history')) {
+    for (const r of runs) {
+      const presented = Math.min(r.originalBytes || 0, r.presentedBytes || 0);
+      const pct = r.originalBytes > 0 ? (100 * (1 - presented / r.originalBytes)).toFixed(1) : '0.0';
+      process.stdout.write(`${r.ts}  ${String(r.kind || '?').padEnd(10)}  exit ${r.exitCode}  ${r.originalBytes}B -> ${presented}B  (${pct}%)  ${r.command}\n`);
+    }
     return;
   }
   const originalBytes = runs.reduce((s, r) => s + (r.originalBytes || 0), 0);
