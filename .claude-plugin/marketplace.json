@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "weave",
+  "description": "Weave: a lightweight orchestration layer that connects coding agents, project context, terminal tools and verification.",
+  "owner": {
+    "name": "Weave contributors"
+  },
+  "plugins": [
+    {
+      "name": "weave",
+      "description": "Different tools. One workflow.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

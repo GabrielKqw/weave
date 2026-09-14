@@ -1,0 +1,7 @@
+{
+  "name": "weave",
+  "version": "0.2.1",
+  "description": "Connects coding agents, project context, terminal tools and verification in one adaptive workflow.",
+  "keywords": ["orchestration", "context", "workflow", "terminal", "verification"],
+  "hooks": "./hooks/hooks.json"
+}
