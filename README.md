@@ -13,7 +13,7 @@ Minimal engineering policy, terminal intelligence, context continuity, and verif
 [![CI](https://github.com/GabrielKqw/weave/actions/workflows/ci.yml/badge.svg)](https://github.com/GabrielKqw/weave/actions/workflows/ci.yml)
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/runtime_dependencies-0-111111)
-![Version](https://img.shields.io/badge/version-0.3.4-2563eb)
+![Version](https://img.shields.io/badge/version-0.4.0-2563eb)
 
 </div>
 
@@ -83,6 +83,9 @@ Execute original command
 | Recovery | Stores redacted complete captures under `.weave/runs/` |
 | Context continuity | Maintains a compact `.weave/state.md` handoff |
 | Focused operations | Provides review, repository audit, debt, gain, and help skills |
+| Multi-agent rule files | Generates the same policy text for Cursor, Cline, Windsurf, and any `AGENTS.md`-reading agent |
+| MCP server | Serves policy, gain, and discover over stdio JSON-RPC for MCP-capable clients without a native plugin integration |
+| Retrospective analysis | `weave discover` estimates reduction missed in past sessions that ran outside the wrapper |
 
 ## Architecture
 
@@ -106,9 +109,12 @@ flowchart LR
 .codex-plugin/        Codex manifest
 .agents/plugins/      Codex marketplace metadata
 bin/weave.js          CLI
-core/                 execution, modes, filters, redaction, quoting, storage
+core/                 execution, modes, filters, redaction, quoting, storage, discover
 hooks/                lifecycle and shell interception adapters
 skills/               shared workflow and focused operations
+mcp/server.js         dependency-free MCP server (stdio) for non-plugin clients
+commands/weave.toml   OpenCode-style slash command
+scripts/              agent rule generator and reproducible benchmark
 tests/                dependency-free Node.js test suite
 ```
 
@@ -148,18 +154,22 @@ Small output passes through. If a reduced report would be as large as the origin
 
 ## Benchmarks
 
-Representative local measurements from three repeated runs on the terminal engine:
+`scripts/benchmark.js` runs `core/filters.js` against fixed synthetic inputs — no shell, no I/O — so these numbers are reproducible by anyone:
+
+```bash
+npm run benchmark
+```
 
 | Scenario | Original | Presented | Reduction | Integrity |
 | --- | ---: | ---: | ---: | --- |
-| `git status`, 30 untracked files | 704 B | 506 B | 28.1% | File list preserved |
-| Synthetic 300-line passing test | 6,210 B | 816 B | 86.9% | Final summary preserved |
-| Failing assertion | 98 B | 98 B | 0% | Error and exit 1 preserved |
-| `grep`, 50 matches | 1,682 B | 1,335 B | 20.6% | Matches grouped by file |
+| `git status`, 30 untracked files | 555 B | 490 B | 11.7% | File list preserved |
+| Synthetic 300-line passing test | 6,465 B | 83 B | 98.7% | Final summary preserved |
+| Failing assertion | 60 B | 60 B | 0% | Error and exit 1 preserved |
+| `grep`, 50 matches | 2,031 B | 1,676 B | 17.5% | Matches grouped by file |
 
-Measured wrapper overhead was approximately 50-70 ms per command on the test machine. Results vary with output shape, machine, shell, and active profile. These numbers measure bytes presented locally, not API token billing.
+Results vary with output shape, machine, and active profile in real usage; the script fixes the input so the reduction logic itself stays measurable across changes. These numbers measure bytes presented locally, not API token billing.
 
-Run `node bin/weave.js gain` inside a project to measure its retained Weave history.
+Run `node bin/weave.js gain` inside a project to measure its retained Weave history, or `node bin/weave.js discover` to estimate savings missed before Weave was wrapping commands.
 
 ## Supported Agents
 
@@ -170,6 +180,38 @@ Run `node bin/weave.js gain` inside a project to measure its retained Weave hist
 | Other agents | The CLI can be called directly; automatic host integration is not claimed |
 
 Unsupported hook events fail open, so the original tool call proceeds unchanged.
+
+### Rule-file agents
+
+Cursor, Cline, Windsurf, and any agent that reads a repository-level `AGENTS.md` don't run Weave's hooks, so they get the same `full`-mode policy text as a static, checked-in file instead:
+
+```text
+AGENTS.md
+.cursor/rules/weave.mdc
+.clinerules/weave.md
+.windsurf/rules/weave.md
+```
+
+All four are generated from the single source of truth in `core/mode.js` — there is exactly one place the wording is written:
+
+```bash
+node scripts/generate-agent-rules.js          # regenerate after changing core/mode.js
+node scripts/generate-agent-rules.js --check  # CI: fail if the checked-in files drifted
+```
+
+`npm run check` runs the drift check automatically.
+
+### MCP server
+
+`mcp/server.js` is a dependency-free MCP server over stdio (JSON-RPC 2.0, newline-delimited) for MCP-capable clients that have no native Weave plugin — it exposes `get_policy`, `gain`, and `discover` as tools, backed by the same `core/` modules the CLI uses. Point any MCP client at:
+
+```json
+{
+  "mcpServers": {
+    "weave": { "command": "node", "args": ["<plugin-root>/mcp/server.js"] }
+  }
+}
+```
 
 ## Installation
 
@@ -234,8 +276,11 @@ node bin/weave.js mode
 node bin/weave.js mode ultra
 node bin/weave.js doctor
 node bin/weave.js gain
+node bin/weave.js discover
 node bin/weave.js recall <run-id>
 ```
+
+`discover` reads this project's local Claude Code session transcripts (`~/.claude/projects/<slug>/*.jsonl`), finds Bash commands that ran without the Weave wrapper (mode was off, or the session predates installation), and replays their recorded output through the current filters to estimate missed savings. It never prints raw commands or output — only byte counts grouped by command kind. If no transcript directory exists (Codex-only projects, CI, fresh installs) it says so and exits cleanly.
 
 Run commands from the target repository so modes and history remain project-local.
 
