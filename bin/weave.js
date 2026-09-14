@@ -19,7 +19,12 @@ function cmdExec(argv) {
     return;
   }
   const report = execCore.execAndReport(command, { cwd: process.cwd() });
-  process.stdout.write(execCore.formatReport(report) + '\n');
+  if (report.passthrough) {
+    process.stdout.write(report.presentedStdout);
+    process.stderr.write(report.presentedStderr);
+  } else {
+    process.stdout.write(execCore.formatReport(report) + '\n');
+  }
   process.exitCode = report.exitCode;
 }
 
@@ -57,7 +62,10 @@ function cmdGain() {
     return;
   }
   const originalBytes = runs.reduce((s, r) => s + (r.originalBytes || 0), 0);
-  const presentedBytes = runs.reduce((s, r) => s + (r.presentedBytes || 0), 0);
+  const presentedBytes = runs.reduce(
+    (s, r) => s + Math.min(r.originalBytes || 0, r.presentedBytes || 0),
+    0
+  );
   const reductionPct = originalBytes > 0 ? (100 * (1 - presentedBytes / originalBytes)).toFixed(1) : '0.0';
   const approxTokensSaved = Math.max(0, Math.round((originalBytes - presentedBytes) / 4));
 

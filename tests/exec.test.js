@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { spawnSync } = require('child_process');
 const execCore = require('../core/exec');
 const storage = require('../core/storage');
 
@@ -83,10 +84,27 @@ test('stored metadata redacts secrets from the command', () => {
   fs.rmSync(cwd, { recursive: true, force: true });
 });
 
-test('presented byte accounting includes the complete formatted report', () => {
+test('falls back to the original output when a report would be larger', () => {
   const cwd = tmpCwd();
   const report = execCore.execAndReport('echo hi', { cwd });
   const found = storage.loadRun(cwd, report.id);
+  assert.equal(report.passthrough, true);
+  assert.equal(report.omitted, 0);
+  assert.equal(execCore.formatReport(report), 'hi\n');
+  assert.equal(found.meta.originalBytes, found.meta.presentedBytes);
   assert.equal(found.meta.presentedBytes, Buffer.byteLength(execCore.formatReport(report), 'utf8'));
+  fs.rmSync(cwd, { recursive: true, force: true });
+});
+
+test('gain treats legacy oversized reports as zero savings', () => {
+  const cwd = tmpCwd();
+  storage.saveRun(cwd, { originalBytes: 10, presentedBytes: 20 }, null);
+  const run = spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'weave.js'), 'gain'], {
+    cwd,
+    encoding: 'utf8',
+  });
+  assert.equal(run.status, 0);
+  assert.match(run.stdout, /Report bytes:\s+10/);
+  assert.match(run.stdout, /Reduction:\s+0\.0%/);
   fs.rmSync(cwd, { recursive: true, force: true });
 });
