@@ -1,7 +1,12 @@
 {
   "name": "weave",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Connects coding agents, project context, terminal tools and verification in one adaptive workflow.",
+  "author": {
+    "name": "Gabriel Costa",
+    "url": "https://www.linkedin.com/in/gabriel-costa-940b89276/"
+  },
+  "license": "MIT",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }
