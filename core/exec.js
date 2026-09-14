@@ -2,6 +2,7 @@
 
 const { spawnSync } = require('child_process');
 const fs = require('fs');
+const path = require('path');
 const { shellQuoteSingle, toGitBashPath } = require('./quoting');
 const filters = require('./filters');
 const redact = require('./redact');
@@ -9,21 +10,23 @@ const storage = require('./storage');
 
 const SENTINEL = 'WEAVE_WRAPPED=1';
 const MAX_WRAP_LEN = 4000;
-const CAPTURE_CAP_BYTES = 20 * 1024 * 1024; // 20MB per stream
+const CAPTURE_CAP_BYTES = 20 * 1024 * 1024;
 
 function bashExecutable() {
   if (process.env.WEAVE_BASH) return process.env.WEAVE_BASH;
-  const gitBash = 'C:\\Program Files\\Git\\bin\\bash.exe';
-  return process.platform === 'win32' && fs.existsSync(gitBash) ? gitBash : 'bash';
+  if (process.platform !== 'win32') return 'bash';
+  const candidates = [
+    process.env.ProgramFiles && path.join(process.env.ProgramFiles, 'Git', 'bin', 'bash.exe'),
+    process.env['ProgramFiles(x86)'] && path.join(process.env['ProgramFiles(x86)'], 'Git', 'bin', 'bash.exe'),
+    process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Programs', 'Git', 'bin', 'bash.exe'),
+  ].filter(Boolean);
+  return candidates.find(fs.existsSync) || 'bash';
 }
 
 function isAlreadyWrapped(command) {
   return String(command || '').trimStart().startsWith(SENTINEL);
 }
 
-// Decide whether the PreToolUse hook should rewrite this Bash call at all.
-// Anything excluded here is true passthrough — the hook makes no decision
-// and the original command runs completely untouched.
 function shouldWrap(toolInput) {
   const command = toolInput && toolInput.command;
   if (!command || typeof command !== 'string') return false;
@@ -33,16 +36,11 @@ function shouldWrap(toolInput) {
   return true;
 }
 
-// Build the replacement command string the hook hands back as
-// `updatedInput.command`. weaveJsPath is the absolute, OS-native path to
-// bin/weave.js (as resolved by Node's own path module).
 function buildWrappedCommand(originalCommand, weaveJsPath) {
   const jsPath = toGitBashPath(weaveJsPath);
   return `${SENTINEL} node ${shellQuoteSingle(jsPath)} exec -- ${shellQuoteSingle(originalCommand)}`;
 }
 
-// Actually run the original command through the same shell Claude Code's
-// own Bash tool uses (Git Bash / POSIX sh), capturing streams separately.
 function runCommand(command, { cwd } = {}) {
   const result = spawnSync(bashExecutable(), ['-c', command], {
     cwd: cwd || process.cwd(),
@@ -68,9 +66,6 @@ function bytes(s) {
   return Buffer.byteLength(s || '', 'utf8');
 }
 
-// Present stderr with the same dedupe/truncate primitives as the generic
-// stdout fallback, but always separately labeled — stderr is never merged
-// into or hidden behind the stdout summary.
 function presentStderr(stderr, exitCode) {
   if (exitCode !== 0) return { presented: stderr || '', omitted: 0 };
   const lines = filters.toLines(stderr);
@@ -82,9 +77,6 @@ function presentStderr(stderr, exitCode) {
   return { presented: kept.join('\n'), omitted };
 }
 
-// Run `command`, filter its output, persist what's needed for recovery, and
-// return everything the CLI needs to print a report and exit with the
-// original command's exit code.
 function execAndReport(command, { cwd } = {}) {
   const workDir = cwd || process.cwd();
   const run = runCommand(command, { cwd: workDir });

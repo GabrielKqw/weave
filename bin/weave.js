@@ -6,6 +6,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const execCore = require('../core/exec');
 const storage = require('../core/storage');
+const modes = require('../core/mode');
 
 const PLUGIN_ROOT = path.join(__dirname, '..');
 
@@ -71,6 +72,21 @@ function cmdGain() {
   process.stdout.write('It does not estimate total context, session cost, or API spend.\n');
 }
 
+function cmdMode(argv) {
+  const requested = argv[0];
+  if (!requested) {
+    process.stdout.write(modes.instructions(modes.readMode(process.cwd())) + '\n');
+    return;
+  }
+  if (!modes.MODES.has(requested)) {
+    process.stderr.write('weave mode: expected off, lite, full, or ultra\n');
+    process.exitCode = 2;
+    return;
+  }
+  modes.writeMode(process.cwd(), requested);
+  process.stdout.write(modes.instructions(requested) + '\n');
+}
+
 function checkJson(label, filePath, results) {
   if (!fs.existsSync(filePath)) {
     results.push({ ok: false, label, detail: `missing: ${filePath}` });
@@ -110,6 +126,8 @@ function cmdDoctor() {
     label: 'hooks/pretooluse.js present',
     detail: hookScriptPath,
   });
+  const lifecyclePath = path.join(PLUGIN_ROOT, 'hooks', 'lifecycle.js');
+  results.push({ ok: fs.existsSync(lifecyclePath), label: 'lifecycle mode hook present', detail: lifecyclePath });
 
   const hasBashMatcher = Boolean(
     hooksJson &&
@@ -152,10 +170,12 @@ function main() {
       return cmdRecall(rest);
     case 'gain':
       return cmdGain(rest);
+    case 'mode':
+      return cmdMode(rest);
     case 'doctor':
       return cmdDoctor(rest);
     default:
-      process.stdout.write('Usage: weave <doctor|gain|recall <id>|exec -- <command>>\n');
+      process.stdout.write('Usage: weave <doctor|mode [off|lite|full|ultra]|gain|recall <id>|exec -- <command>>\n');
       process.exitCode = cmd ? 2 : 0;
   }
 }

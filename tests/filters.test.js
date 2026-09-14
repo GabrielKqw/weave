@@ -16,7 +16,13 @@ test('classify() recognizes the initial command families', () => {
   assert.equal(filters.classify('npm run test'), 'test');
   assert.equal(filters.classify('cargo test'), 'test');
   assert.equal(filters.classify('dotnet test'), 'test');
-  assert.equal(filters.classify('ls -la'), 'generic');
+  assert.equal(filters.classify('go test ./...'), 'test');
+  assert.equal(filters.classify('npm run build'), 'summary');
+  assert.equal(filters.classify('docker compose build'), 'summary');
+  assert.equal(filters.classify('docker logs api'), 'logs');
+  assert.equal(filters.classify('ls -la'), 'listing');
+  assert.equal(filters.classify('cat package.json'), 'passthrough');
+  assert.equal(filters.classify('kubectl get pods -o json'), 'passthrough');
 });
 
 test('classify() falls back to generic for chained/piped commands', () => {
@@ -140,6 +146,34 @@ test('reduceOutput passthrough for small unknown-command output', () => {
   assert.equal(r.kind, 'passthrough');
   assert.equal(r.presented, raw);
   assert.equal(r.omitted, 0);
+});
+
+test('verbatim commands remain complete even when output is large', () => {
+  const raw = Array.from({ length: 100 }, (_, i) => `source line ${i}`).join('\n');
+  const r = filters.reduceOutput('cat large.txt', raw, 0);
+  assert.equal(r.kind, 'passthrough');
+  assert.equal(r.presented, raw);
+  assert.equal(r.omitted, 0);
+});
+
+test('summary profiles retain warnings and the final outcome', () => {
+  const raw = Array.from({ length: 80 }, (_, i) => `compiling module-${i}`);
+  raw[35] = 'warning: deprecated API';
+  raw.push('Build completed successfully');
+  const r = filters.reduceOutput('npm run build', raw.join('\n'), 0);
+  assert.equal(r.kind, 'summary');
+  assert.ok(r.presented.includes('warning: deprecated API'));
+  assert.ok(r.presented.includes('Build completed successfully'));
+  assert.ok(r.omitted > 0);
+});
+
+test('log profiles retain errors and recent lines', () => {
+  const raw = Array.from({ length: 100 }, (_, i) => `service line ${i}`);
+  raw[50] = 'ERROR database unavailable';
+  const r = filters.reduceOutput('docker logs api', raw.join('\n'), 0);
+  assert.equal(r.kind, 'logs');
+  assert.ok(r.presented.includes('ERROR database unavailable'));
+  assert.ok(r.presented.includes('service line 99'));
 });
 
 test('reduceOutput never reports success on a non-zero exit code', () => {

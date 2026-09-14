@@ -114,19 +114,21 @@ whole engine for v0.
 ## 4. Terminal Intelligence
 
 Weave has its own terminal-output reduction engine (`core/`, `bin/weave.js`,
-`hooks/`) — it does not shell out to any external noise-reduction tool at
-runtime. On Claude Code, a project-scoped `PreToolUse` hook
-(`hooks/pretooluse.js`, registered by `hooks/hooks.json`) transparently
-rewrites eligible Bash calls to run through `weave exec`; you don't need to
-invoke `weave` yourself for those. The original command text runs inside a
-capturing Bash process and the model receives a filtered report. Background
-commands and commands longer than 4,000 characters are not wrapped.
+`hooks/`) and no external runtime dependency. A `PreToolUse` hook rewrites
+eligible Bash calls through `weave exec`. The original command runs unchanged
+inside a capturing Bash process. Background commands and commands longer than
+4,000 characters are not wrapped.
 
-Whether or not the hook is active in the current session (e.g. on Codex, or
-if disabled), you can invoke the same engine directly:
+Current profiles cover Git status/diff/log and common Git actions, searches,
+tests, builds, linters, package managers, directory listings, Docker,
+Kubernetes, Terraform, and logs. File-reading commands and explicit JSON
+output are always verbatim. Unknown small output is also left untouched.
+
+The same engine can be invoked directly:
 
 ```
 node "<plugin-root>/bin/weave.js" doctor        # confirm the hook/config are wired up
+node "<plugin-root>/bin/weave.js" mode [name]   # show or set off/lite/full/ultra
 node "<plugin-root>/bin/weave.js" gain          # bytes received vs presented, this project's recorded runs
 node "<plugin-root>/bin/weave.js" recall <id>   # full original output for a run that was filtered or failed
 ```
@@ -158,9 +160,12 @@ never install anything silently to work around it.
 
 ## 5. Minimalism policy (mandatory baseline)
 
-These ten rules apply to every task Weave runs, regardless of platform or
-whether any other minimalism tool is installed. This is Weave's own
-policy — it doesn't borrow another project's mode names or branding.
+The active mode is persisted per project in `.weave/mode`. Switch it with
+`/weave off`, `/weave lite`, `/weave full`, or `/weave ultra`. `full` is the
+default. Lifecycle hooks inject only the selected policy instead of repeating
+the whole skill on every prompt.
+
+These ten rules are the `full` baseline:
 
 1. Understand the request and trace the flow it actually affects before editing.
 2. Examine callers and integrations before fixing a bug — patch the shared cause, not just the symptom the report named.
@@ -173,11 +178,9 @@ policy — it doesn't borrow another project's mode names or branding.
 9. Trigger an extra review pass for anything touching security, auth, credentials, money, personal data, or data-loss risk — never simplify those away to shrink a diff.
 10. Record only compact, useful context in `.weave/state.md` — not full logs, not speculation, not secrets.
 
-If a Ponytail plugin or skill is also installed and active in this session
-(it announces itself, or `claude plugin list`/`codex plugin list` shows
-it), you may additionally defer to its judgment calls for style — Weave
-doesn't own or duplicate Ponytail's ruleset, and the ten rules above stand
-on their own either way.
+Use the independent `weave-review`, `weave-audit`, `weave-debt`,
+`weave-gain`, and `weave-help` skills when their narrower operation is asked
+for. They report without silently changing code.
 
 ## 6. Shared state: `.weave/state.md`
 

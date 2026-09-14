@@ -1,6 +1,7 @@
 {
   "name": "weave",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Connects coding agents, project context, terminal tools and verification in one adaptive workflow.",
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
 }

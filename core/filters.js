@@ -1,18 +1,5 @@
 'use strict';
 
-// Weave's own terminal-output reduction engine.
-//
-// Original implementation — no code from RTK (Apache-2.0) or Ponytail (MIT)
-// is reused here. Only the general, publicly documented *concepts* behind
-// noise reduction (filter/group/dedupe/truncate, keep errors, allow full
-// recovery) informed this design; see README's RTK/Ponytail sections for
-// the sources consulted.
-//
-// Every filter is conservative: if it can't confidently reduce output
-// without risking the loss of a real error, it returns the input unchanged
-// and reports omitted: 0. Nothing here ever changes what already ran —
-// only how the result is presented.
-
 const FLOOR_BYTES = 400;
 const FLOOR_LINES = 12;
 
@@ -21,7 +8,6 @@ function toLines(text) {
   return text.split(/\r?\n/);
 }
 
-// Collapse runs of consecutive identical lines into "<line>  (×N)".
 function dedupeConsecutive(lines) {
   const out = [];
   let i = 0;
@@ -35,9 +21,6 @@ function dedupeConsecutive(lines) {
   return out;
 }
 
-// Keep the first `head` lines, the last `tail` lines, and any line matching
-// `keepPattern` wherever it occurs; collapse the rest into omission markers.
-// Returns { lines, omitted } where `omitted` is the count of dropped lines.
 function truncateMiddle(lines, { head = 20, tail = 20, keepPattern = null } = {}) {
   if (lines.length <= head + tail) return { lines: lines.slice(), omitted: 0 };
 
@@ -71,25 +54,29 @@ function truncateMiddle(lines, { head = 20, tail = 20, keepPattern = null } = {}
   return { lines: out, omitted };
 }
 
-// Decide which specific filter applies. Anything containing top-level shell
-// operators is left as "generic" — we never try to structurally parse mixed
-// output from a chained/piped command.
 function classify(command) {
   const c = (command || '').trim();
   const hasShellOperators = /(\s\|\|?\s|\s&&\s|;|>>?|<)/.test(c);
   if (hasShellOperators) return 'generic';
+  if (/\s(--json|--format[= ]json|-o[= ]json)\b/i.test(c)) return 'passthrough';
+  if (/^(cat|type|more|less|head|tail|sed|Get-Content)\b/i.test(c)) return 'passthrough';
   if (/^git\s+status\b/.test(c)) return 'git-status';
   if (/^git\s+diff\b/.test(c)) return 'git-diff';
   if (/^git\s+log\b/.test(c)) return 'git-log';
+  if (/^git\s+(branch|stash|fetch|pull|push|add|commit)\b/.test(c)) return 'summary';
   if (/^(rg|grep)\b/.test(c)) return 'grep';
-  if (/^(pytest|npm(\s+run)?\s+test\b|npm\s+test\b|cargo\s+test\b|dotnet\s+test\b|jest\b|npx\s+jest\b|vitest\b)/.test(c)) {
+  if (/^(pytest|python\s+-m\s+pytest|(?:npm|pnpm|yarn|bun)(?:\s+run)?\s+test\b|cargo\s+test\b|dotnet\s+test\b|go\s+test\b|mvn(?:w)?\s+test\b|gradle(?:w)?\s+test\b|jest\b|npx\s+(?:jest|vitest)\b|vitest\b)/.test(c)) {
     return 'test';
+  }
+  if (/^(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?(?:build|lint|check|format)\b|^cargo\s+(?:build|check|clippy|fmt)\b|^dotnet\s+(?:build|format)\b|^go\s+(?:build|vet|fmt)\b|^(?:make|cmake|mvnw?|gradlew?)\b/.test(c)) return 'summary';
+  if (/^(?:npm|pnpm|yarn|bun)\s+(?:i|install|add)\b|^(?:pip|pip3)\s+install\b|^cargo\s+install\b/.test(c)) return 'summary';
+  if (/^(?:ls|dir|tree|find|fd)\b/i.test(c)) return 'listing';
+  if (/^(?:docker(?:\s+compose)?|kubectl|terraform|journalctl)\b/.test(c)) {
+    return /\b(logs?|events?)\b/.test(c) ? 'logs' : 'summary';
   }
   return 'generic';
 }
 
-// `git status` boilerplate ("(use \"git add <file>...\" to update...)") is
-// pure instructional text the model never needs to act on.
 function filterGitStatus(stdout) {
   const lines = toLines(stdout);
   const hint = /^\s*\(use "git [^"]+"[^)]*\)\s*$/;
@@ -102,8 +89,6 @@ function filterGitStatus(stdout) {
   return { presented: kept.join('\n'), omitted: lines.length - kept.length };
 }
 
-// The `index <hash>..<hash> <mode>` line in a diff is never diagnostically
-// useful; everything else (hunks, +/- lines) is left untouched.
 function filterGitDiff(stdout) {
   const lines = toLines(stdout);
   const indexLine = /^index [0-9a-f]+\.\.[0-9a-f]+(\s+\d+)?$/;
@@ -111,9 +96,6 @@ function filterGitDiff(stdout) {
   return { presented: kept.join('\n'), omitted: lines.length - kept.length };
 }
 
-// Condense the verbose default `git log` (commit/Author/Date/blank/message
-// blocks) to one line per commit, unless the caller already asked for an
-// explicit format — in which case we don't second-guess it.
 function filterGitLog(stdout, command) {
   if (/--oneline|--format|--pretty|-p\b|--stat|--patch/.test(command || '')) {
     return { presented: stdout, omitted: 0 };
@@ -150,8 +132,6 @@ function filterGitLog(stdout, command) {
   return { presented: out.join('\n'), omitted };
 }
 
-// Group `file:line:content` matches by file, showing the first few per file
-// in full and collapsing the rest to a count.
 function filterGrep(stdout, { maxPerFile = 5 } = {}) {
   const lines = toLines(stdout).filter((l) => l.length);
   const linePattern = /^([^:]+):(\d+):(.*)$/;
@@ -172,7 +152,6 @@ function filterGrep(stdout, { maxPerFile = 5 } = {}) {
     byFile.get(file).push(`${lineNo}: ${rest}`);
   }
   if (lines.length === 0 || unmatched === lines.length) {
-    // Doesn't look like file:line:content (e.g. -l, -c, -o, custom format).
     return { presented: stdout, omitted: 0 };
   }
   let omitted = unmatched;
@@ -192,10 +171,6 @@ function filterGrep(stdout, { maxPerFile = 5 } = {}) {
 
 const FAILURE_MARKER = /\b(FAIL(ED)?|Error|Exception|AssertionError|Traceback|not ok|✗|×)\b/;
 
-// Test-runner output: on success, collapse to the runner's own tail summary
-// (nothing diagnostic is lost — nothing failed). On failure, dedupe repeats
-// and keep every line near a failure marker plus the tail summary, so the
-// actual assertion/traceback/file:line survives.
 function filterTestOutput(stdout, exitCode) {
   const lines = toLines(stdout);
   const deduped = dedupeConsecutive(lines);
@@ -221,8 +196,6 @@ function filterTestOutput(stdout, exitCode) {
 
 const ERRORISH = /\b(error|exception|traceback|fail(ed|ure)?|denied|refused|panic)\b/i;
 
-// Fallback for anything not specifically classified: only touches output
-// that is actually long/repetitive; small output always passes through.
 function filterGeneric(stdout) {
   const lines = toLines(stdout);
   const bytes = Buffer.byteLength(stdout || '', 'utf8');
@@ -234,8 +207,24 @@ function filterGeneric(stdout) {
   return { presented: kept.join('\n'), omitted };
 }
 
-// Top-level entry point. Always returns a presentable stdout string plus
-// bookkeeping the CLI needs to build the Command/Exit/Summary/... report.
+function filterSummary(stdout) {
+  const lines = dedupeConsecutive(toLines(stdout));
+  const { lines: kept, omitted } = truncateMiddle(lines, { head: 6, tail: 12, keepPattern: /\b(error|warning|warn|failed|vulnerabilit|deprecated)\b/i });
+  return { presented: kept.join('\n'), omitted };
+}
+
+function filterListing(stdout) {
+  const lines = toLines(stdout);
+  const { lines: kept, omitted } = truncateMiddle(lines, { head: 30, tail: 10 });
+  return { presented: kept.join('\n'), omitted };
+}
+
+function filterLogs(stdout) {
+  const lines = dedupeConsecutive(toLines(stdout));
+  const { lines: kept, omitted } = truncateMiddle(lines, { head: 8, tail: 30, keepPattern: ERRORISH });
+  return { presented: kept.join('\n'), omitted };
+}
+
 function reduceOutput(command, stdout, exitCode) {
   const rawBytes = Buffer.byteLength(stdout || '', 'utf8');
   const kind = classify(command);
@@ -260,6 +249,10 @@ function reduceOutput(command, stdout, exitCode) {
     };
   }
 
+  if (kind === 'passthrough') {
+    return { kind, presented: stdout || '', omitted: 0, summary: 'ok (verbatim output preserved)', failures: 'none' };
+  }
+
   switch (kind) {
     case 'git-status': {
       const r = filterGitStatus(stdout);
@@ -280,6 +273,18 @@ function reduceOutput(command, stdout, exitCode) {
     case 'test': {
       const r = filterTestOutput(stdout, exitCode);
       return { kind, presented: r.presented, omitted: r.omitted, summary: r.summary, failures: r.failures };
+    }
+    case 'summary': {
+      const r = filterSummary(stdout);
+      return { kind, presented: r.presented, omitted: r.omitted, summary: 'successful command output condensed', failures: 'none' };
+    }
+    case 'listing': {
+      const r = filterListing(stdout);
+      return { kind, presented: r.presented, omitted: r.omitted, summary: 'listing condensed', failures: 'none' };
+    }
+    case 'logs': {
+      const r = filterLogs(stdout);
+      return { kind, presented: r.presented, omitted: r.omitted, summary: 'logs condensed; errors and tail retained', failures: 'none' };
     }
     default: {
       const r = filterGeneric(stdout);
@@ -307,5 +312,8 @@ module.exports = {
   filterGrep,
   filterTestOutput,
   filterGeneric,
+  filterSummary,
+  filterListing,
+  filterLogs,
   reduceOutput,
 };

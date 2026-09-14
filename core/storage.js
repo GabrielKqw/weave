@@ -5,7 +5,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const DEFAULT_MAX_COUNT = 200;
-const DEFAULT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+const DEFAULT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
 const RUN_ID_RE = /^[a-f0-9]{12}$/;
 
 function runsDir(cwd) {
@@ -16,15 +16,10 @@ function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
 }
 
-// 12 hex chars from a CSPRNG — unpredictable, not sequential, no index to
-// enumerate other runs from.
 function generateId() {
   return crypto.randomBytes(6).toString('hex');
 }
 
-// meta: plain JSON-serializable object. rawText: full (already-redacted)
-// text to persist for recovery, or null/undefined if nothing needs to be
-// recoverable (nothing was omitted and the command succeeded).
 function saveRun(cwd, meta, rawText) {
   const dir = runsDir(cwd);
   ensureDir(dir);
@@ -66,12 +61,10 @@ function listRuns(cwd) {
     .sort((a, b) => new Date(a.ts) - new Date(b.ts));
 }
 
-// Delete the oldest runs beyond maxCount, and any run older than maxAgeMs,
-// regardless of count. Removes both the metadata and raw file for each.
 function pruneOldRuns(cwd, { maxCount = DEFAULT_MAX_COUNT, maxAgeMs = DEFAULT_MAX_AGE_MS } = {}) {
   const dir = runsDir(cwd);
   if (!fs.existsSync(dir)) return { removed: 0 };
-  const runs = listRuns(cwd); // oldest first
+  const runs = listRuns(cwd);
   const now = Date.now();
   const toRemove = new Set();
 
