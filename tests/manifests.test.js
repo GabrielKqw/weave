@@ -11,10 +11,10 @@ function readJson(rel) {
   return JSON.parse(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
 }
 
-test('.claude-plugin/plugin.json is valid and names the hook bundle', () => {
+test('.claude-plugin/plugin.json relies on automatic standard hook discovery', () => {
   const pkg = readJson('.claude-plugin/plugin.json');
   assert.equal(pkg.name, 'weave');
-  assert.equal(pkg.hooks, './hooks/hooks.json');
+  assert.equal(pkg.hooks, undefined);
 });
 
 test('.claude-plugin/marketplace.json is valid and self-references this plugin', () => {
