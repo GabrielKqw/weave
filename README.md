@@ -1,5 +1,7 @@
 # Weave
 
+[![CI](https://github.com/GabrielKqw/weave/actions/workflows/ci.yml/badge.svg)](https://github.com/GabrielKqw/weave/actions/workflows/ci.yml)
+
 Weave is a lightweight workflow and terminal-intelligence plugin for Claude Code and Codex. It combines two practical ideas in one self-contained project:
 
 - keep implementation small, direct, and verifiable;
@@ -57,7 +59,7 @@ Small output passes through unchanged. Any command that exits non-zero keeps its
 - Bash available on `PATH` for command execution;
 - Claude Code or Codex for plugin use.
 
-On Windows, Git Bash satisfies the Bash requirement.
+On Windows, Weave automatically uses Git Bash from the standard Git for Windows location. For a custom installation, set `WEAVE_BASH` to the full path of `bash.exe`.
 
 ## Install in Claude Code
 
@@ -147,9 +149,11 @@ tests/                      Node.js test suite
 No dependency installation is required.
 
 ```bash
-node --test tests/*.test.js
-node bin/weave.js doctor
+npm test
+npm run check
 ```
+
+The same checks run on Linux and Windows for every push and pull request.
 
 ## Scope
 

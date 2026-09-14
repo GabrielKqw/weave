@@ -7,6 +7,12 @@
 // README.
 
 const PATTERNS = [
+  // PEM private keys
+  /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z0-9 ]*PRIVATE KEY-----/g,
+  // Credentials embedded in URLs
+  /\b([a-z][a-z0-9+.-]*:\/\/[^:\s/@]+:)[^@\s/]+(@)/gi,
+  // Common API keys using the sk- prefix
+  /\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b/g,
   // AWS access key IDs
   /\bAKIA[0-9A-Z]{16}\b/g,
   // GitHub tokens (classic + fine-grained-ish prefixes)
@@ -22,10 +28,13 @@ const PATTERNS = [
 function redact(text) {
   if (!text) return text;
   let out = text;
-  out = out.replace(PATTERNS[0], '[REDACTED:aws-key]');
-  out = out.replace(PATTERNS[1], '[REDACTED:token]');
-  out = out.replace(PATTERNS[2], '[REDACTED:bearer]');
-  out = out.replace(PATTERNS[3], (_m, prefix) => `${prefix}[REDACTED]`);
+  out = out.replace(PATTERNS[0], '[REDACTED:private-key]');
+  out = out.replace(PATTERNS[1], '$1[REDACTED]$2');
+  out = out.replace(PATTERNS[2], '[REDACTED:api-key]');
+  out = out.replace(PATTERNS[3], '[REDACTED:aws-key]');
+  out = out.replace(PATTERNS[4], '[REDACTED:token]');
+  out = out.replace(PATTERNS[5], '[REDACTED:bearer]');
+  out = out.replace(PATTERNS[6], (_m, prefix) => `${prefix}[REDACTED]`);
   return out;
 }
 
