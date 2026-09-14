@@ -28,6 +28,18 @@ test('redacts generic password/secret/token assignments', () => {
   assert.ok(out.includes('[REDACTED]'));
 });
 
+test('redacts private keys, API keys, and URL credentials', () => {
+  const privateKey = '-----BEGIN PRIVATE KEY-----\nprivate-material\n-----END PRIVATE KEY-----';
+  const apiKey = 'sk-proj-abcdefghijklmnopqrstuvwxyz123456';
+  const url = 'postgres://admin:plain-password@example.test/db';
+  const out = redact(`${privateKey}\n${apiKey}\n${url}`);
+  assert.ok(!out.includes('private-material'));
+  assert.ok(!out.includes(apiKey));
+  assert.ok(!out.includes('plain-password'));
+  assert.ok(out.includes('[REDACTED:private-key]'));
+  assert.ok(out.includes('postgres://admin:[REDACTED]@example.test/db'));
+});
+
 test('leaves ordinary output alone', () => {
   const text = '5 passed, 0 failed in 1.2s\nmodified: src/app.py';
   assert.equal(redact(text), text);
