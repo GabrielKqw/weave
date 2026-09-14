@@ -36,7 +36,7 @@ test('package and plugin versions agree', () => {
   assert.equal(pkg.version, readJson('.claude-plugin/plugin.json').version);
   assert.equal(pkg.version, readJson('.codex-plugin/plugin.json').version);
   assert.equal(pkg.bin.weave, 'bin/weave.js');
-  assert.equal(pkg.scripts.test, 'node --test');
+  assert.equal(pkg.scripts.test, 'node --test tests/*.test.js');
 });
 
 test('.agents/plugins/marketplace.json is valid and points at the local plugin root', () => {

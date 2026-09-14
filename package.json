@@ -1,6 +1,6 @@
 {
   "name": "weave-agent-workflow",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "description": "Minimal workflow and terminal intelligence for Claude Code and Codex.",
   "author": "Gabriel Costa",
@@ -10,7 +10,7 @@
     "weave": "bin/weave.js"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "node --test tests/*.test.js",
     "check": "npm test && node bin/weave.js doctor"
   },
   "engines": {

@@ -106,7 +106,9 @@ function execAndReport(command, { cwd } = {}) {
     presentedStdout: reducedOut.presented,
     presentedStderr: reducedErr.presented,
   };
-  const presentedBytes = bytes(formatReport(provisionalReport));
+  const passthrough = bytes(formatReport(provisionalReport)) >= originalBytes;
+  const presentedBytes = passthrough ? originalBytes : bytes(formatReport(provisionalReport));
+  const omitted = passthrough ? 0 : totalOmitted;
 
   const id = storage.saveRun(
     workDir,
@@ -116,7 +118,7 @@ function execAndReport(command, { cwd } = {}) {
       kind: reducedOut.kind,
       originalBytes,
       presentedBytes,
-      omitted: totalOmitted,
+      omitted,
     },
     rawText
   );
@@ -124,11 +126,16 @@ function execAndReport(command, { cwd } = {}) {
   return {
     ...provisionalReport,
     id,
+    passthrough,
+    omitted,
+    presentedStdout: passthrough ? run.stdout : reducedOut.presented,
+    presentedStderr: passthrough ? run.stderr : reducedErr.presented,
     recovery: shouldPersistRaw ? `weave recall ${id}` : provisionalReport.recovery,
   };
 }
 
 function formatReport(report) {
+  if (report.passthrough) return report.presentedStdout + report.presentedStderr;
   const lines = [
     `Command: ${report.command}`,
     `Exit: ${report.exitCode}`,

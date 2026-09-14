@@ -1,6 +1,6 @@
 {
   "name": "weave",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Connects coding agents, project context, terminal tools and verification in one adaptive workflow.",
   "author": {
     "name": "Gabriel Costa",
