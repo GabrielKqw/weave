@@ -183,29 +183,47 @@ Unsupported hook events fail open, so the original tool call proceeds unchanged.
 ### Claude Code
 
 ```bash
-git clone https://github.com/GabrielKqw/weave.git
-cd weave
-claude plugin marketplace add ./ --scope project
-claude plugin install weave@weave --scope project
+claude plugin marketplace add GabrielKqw/weave --scope user
+claude plugin install weave@weave --scope user
 claude plugin details weave@weave
-node bin/weave.js doctor
 ```
 
-Project scope avoids modifying global Claude Code configuration.
+Claude Code keeps a managed local checkout of the Git marketplace. Update it from the plugin screen or from the terminal, then restart Claude Code:
 
 ```bash
-claude plugin uninstall weave@weave --scope project
-claude plugin marketplace remove weave --scope project
+claude plugin update weave@weave --scope user
+```
+
+To uninstall:
+
+```bash
+claude plugin uninstall weave@weave --scope user
+claude plugin marketplace remove weave --scope user
 ```
 
 ### Codex CLI
 
 ```bash
-git clone https://github.com/GabrielKqw/weave.git
-cd weave
-codex plugin marketplace add ./
+codex plugin marketplace add GabrielKqw/weave
 codex plugin add weave@weave
 codex plugin list
+```
+
+Refresh the managed Git marketplace checkout with:
+
+```bash
+codex plugin marketplace upgrade weave
+```
+
+### Local development
+
+Use a local marketplace only when developing Weave itself:
+
+```bash
+git clone https://github.com/GabrielKqw/weave.git
+cd weave
+claude plugin marketplace add ./ --scope project
+claude plugin install weave@weave --scope project
 node bin/weave.js doctor
 ```
 
