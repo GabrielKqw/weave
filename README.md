@@ -185,7 +185,7 @@ Unsupported hook events fail open, so the original tool call proceeds unchanged.
 ```bash
 git clone https://github.com/GabrielKqw/weave.git
 cd weave
-claude plugin marketplace add . --scope project
+claude plugin marketplace add ./ --scope project
 claude plugin install weave@weave --scope project
 claude plugin details weave@weave
 node bin/weave.js doctor
@@ -203,7 +203,7 @@ claude plugin marketplace remove weave --scope project
 ```bash
 git clone https://github.com/GabrielKqw/weave.git
 cd weave
-codex plugin marketplace add .
+codex plugin marketplace add ./
 codex plugin add weave@weave
 codex plugin list
 node bin/weave.js doctor
