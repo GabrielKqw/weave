@@ -24,7 +24,10 @@ function saveRun(cwd, meta, rawText) {
   const dir = runsDir(cwd);
   ensureDir(dir);
   const id = generateId();
-  const record = { id, ts: new Date().toISOString(), hasRaw: Boolean(rawText), ...meta };
+  // ts alone (millisecond resolution) can tie across rapid successive saves in
+  // the same process; hrns is a monotonic per-process tiebreaker so ordering
+  // doesn't depend on filesystem-dependent, unspecified directory listing order.
+  const record = { id, ts: new Date().toISOString(), hrns: process.hrtime.bigint().toString(), hasRaw: Boolean(rawText), ...meta };
   fs.writeFileSync(path.join(dir, `${id}.json`), JSON.stringify(record, null, 2), { mode: 0o600 });
   if (rawText) {
     fs.writeFileSync(path.join(dir, `${id}.raw.txt`), rawText, { mode: 0o600 });
@@ -58,7 +61,13 @@ function listRuns(cwd) {
       }
     })
     .filter(Boolean)
-    .sort((a, b) => new Date(a.ts) - new Date(b.ts));
+    .sort((a, b) => {
+      const byTs = new Date(a.ts) - new Date(b.ts);
+      if (byTs !== 0) return byTs;
+      if (a.hrns === undefined || b.hrns === undefined) return 0;
+      const byHrns = BigInt(a.hrns) - BigInt(b.hrns);
+      return byHrns < 0n ? -1 : byHrns > 0n ? 1 : 0;
+    });
 }
 
 function pruneOldRuns(cwd, { maxCount = DEFAULT_MAX_COUNT, maxAgeMs = DEFAULT_MAX_AGE_MS } = {}) {
