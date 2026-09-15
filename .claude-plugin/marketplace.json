@@ -3,14 +3,26 @@
   "name": "weave",
   "description": "Weave: a lightweight orchestration layer that connects coding agents, project context, terminal tools and verification.",
   "owner": {
-    "name": "Gabriel Costa"
+    "name": "Gabriel Costa",
+    "url": "https://github.com/GabrielKqw"
   },
   "plugins": [
     {
       "name": "weave",
+      "displayName": "Weave",
       "description": "Different tools. One workflow.",
       "source": "./",
-      "category": "productivity"
+      "category": "productivity",
+      "version": "0.4.0",
+      "author": {
+        "name": "Gabriel Costa",
+        "url": "https://github.com/GabrielKqw"
+      },
+      "homepage": "https://github.com/GabrielKqw/weave",
+      "repository": "https://github.com/GabrielKqw/weave",
+      "license": "MIT",
+      "keywords": ["orchestration", "context", "workflow", "terminal", "verification", "mcp", "agent"],
+      "tags": ["claude-code", "codex", "productivity", "terminal-intelligence"]
     }
   ]
 }
