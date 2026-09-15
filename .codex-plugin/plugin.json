@@ -8,5 +8,14 @@
   },
   "license": "MIT",
   "skills": "./skills/",
-  "hooks": "./hooks/hooks.json"
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "Weave",
+    "shortDescription": "Terminal intelligence, context continuity, and verification",
+    "longDescription": "Wraps shell commands to strip noisy successful output while always preserving failures in full, keeps a compact .weave/state.md handoff across sessions, and applies one minimalism/verification policy.",
+    "developerName": "Gabriel Costa",
+    "category": "Productivity",
+    "capabilities": ["Instructions", "Lifecycle hooks"],
+    "websiteURL": "https://github.com/GabrielKqw/weave"
+  }
 }

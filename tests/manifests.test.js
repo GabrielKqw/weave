@@ -47,16 +47,19 @@ test('.agents/plugins/marketplace.json is valid and points at the local plugin r
 });
 
 test('hooks/hooks.json declares a PreToolUse Bash matcher pointing at the real hook file', () => {
+  // The command is a single interpolated string ("node \"${CLAUDE_PLUGIN_ROOT}/hooks/x.js\""),
+  // not a separate command+args pair - Codex CLI only substitutes ${CLAUDE_PLUGIN_ROOT} inside
+  // the "command" string, not inside "args" array entries, so a split form silently fails there.
   const hooks = readJson('hooks/hooks.json');
   const entry = hooks.hooks.PreToolUse.find((e) => String(e.matcher).includes('Bash'));
   assert.ok(entry, 'expected a Bash matcher under PreToolUse');
   const handler = entry.hooks[0];
-  assert.equal(handler.command, 'node');
-  assert.ok(handler.args[0].endsWith('/hooks/pretooluse.js'));
+  assert.equal(handler.args, undefined, 'command must be a single string, not split into command+args');
+  assert.match(handler.command, /^node "\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/pretooluse\.js"$/);
   assert.ok(fs.existsSync(path.join(ROOT, 'hooks', 'pretooluse.js')));
   for (const event of ['SessionStart', 'SubagentStart', 'UserPromptSubmit']) {
     assert.ok(Array.isArray(hooks.hooks[event]), `expected ${event}`);
-    assert.ok(hooks.hooks[event][0].hooks[0].args[0].endsWith('/hooks/lifecycle.js'));
+    assert.match(hooks.hooks[event][0].hooks[0].command, /\/hooks\/lifecycle\.js"$/);
   }
 });
 

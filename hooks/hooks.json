@@ -6,8 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/lifecycle.js"],
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/lifecycle.js\"",
             "timeout": 5
           }
         ]
@@ -18,8 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/lifecycle.js"],
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/lifecycle.js\"",
             "timeout": 5
           }
         ]
@@ -30,8 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/lifecycle.js"],
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/lifecycle.js\"",
             "timeout": 5
           }
         ]
@@ -43,8 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse.js"],
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse.js\"",
             "timeout": 10
           }
         ]
