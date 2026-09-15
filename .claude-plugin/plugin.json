@@ -1,7 +1,7 @@
 {
   "name": "weave",
   "version": "0.4.0",
-  "description": "Connects coding agents, project context, terminal tools and verification in one adaptive workflow.",
+  "description": "Weave is a dependency-free engineering layer for Claude Code and Codex. It wraps shell commands to strip noisy successful output while always preserving failures in full, keeps a compact .weave/state.md handoff so context survives across sessions and between agents, and applies one consistent minimalism-and-verification policy so agents reuse existing code, prefer native features over new dependencies, and back every completion claim with real evidence.",
   "author": {
     "name": "Gabriel Costa",
     "url": "https://www.linkedin.com/in/gabriel-costa-940b89276/"

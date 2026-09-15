@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300" role="img" aria-labelledby="title desc">
+<title id="title">Weave</title>
+<desc id="desc">Weave — the engineering layer for AI coding agents.</desc>
+<style>
+  text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wordmark { fill: #ffffff; }
+  .tagline { fill: #c3c2b7; }
+  .thread-1 { stroke: #2a3444; }
+  .thread-2 { stroke: #2a78d6; }
+  .thread-3 { stroke: #5598e7; }
+</style>
+<rect x="0" y="0" width="1200" height="300" fill="#0d1117"/>
+<path class="thread-1" d="M -20 250 C 180 210, 380 290, 580 250 S 980 210, 1220 250" fill="none" stroke-width="2"/>
+<path class="thread-2" d="M -20 262 C 180 222, 380 302, 580 262 S 980 222, 1220 262" fill="none" stroke-width="2"/>
+<path class="thread-3" d="M -20 274 C 180 234, 380 314, 580 274 S 980 234, 1220 274" fill="none" stroke-width="2"/>
+<text class="wordmark" x="600" y="165" text-anchor="middle" font-size="68" font-weight="800" letter-spacing="10">WEAVE</text>
+<text class="tagline" x="600" y="205" text-anchor="middle" font-size="18" font-weight="400">The engineering layer for AI coding agents</text>
+</svg>
