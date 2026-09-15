@@ -39,13 +39,29 @@ const SCENARIOS = [
   },
 ];
 
-console.log('scenario'.padEnd(38), 'original'.padStart(8), 'presented'.padStart(10), 'reduction'.padStart(10), 'integrity');
-console.log('-'.repeat(90));
-for (const s of SCENARIOS) {
-  const r = filters.reduceOutput(s.command, s.stdout, s.exitCode);
-  const original = bytes(s.stdout);
-  const presented = bytes(r.presented);
-  const pct = original > 0 ? (100 * (1 - presented / original)).toFixed(1) : '0.0';
-  const integrity = s.exitCode !== 0 ? 'error + exit preserved' : 'summary/lines preserved';
-  console.log(s.label.padEnd(38), String(original).padStart(8), String(presented).padStart(10), `${pct}%`.padStart(10), integrity);
+function run() {
+  return SCENARIOS.map((s) => {
+    const r = filters.reduceOutput(s.command, s.stdout, s.exitCode);
+    const original = bytes(s.stdout);
+    const presented = bytes(r.presented);
+    const pct = original > 0 ? 100 * (1 - presented / original) : 0;
+    const integrity = s.exitCode !== 0 ? 'error + exit preserved' : 'summary/lines preserved';
+    return { label: s.label, original, presented, pct, integrity };
+  });
 }
+
+if (require.main === module) {
+  console.log('scenario'.padEnd(38), 'original'.padStart(8), 'presented'.padStart(10), 'reduction'.padStart(10), 'integrity');
+  console.log('-'.repeat(90));
+  for (const r of run()) {
+    console.log(
+      r.label.padEnd(38),
+      String(r.original).padStart(8),
+      String(r.presented).padStart(10),
+      `${r.pct.toFixed(1)}%`.padStart(10),
+      r.integrity
+    );
+  }
+}
+
+module.exports = { SCENARIOS, run };

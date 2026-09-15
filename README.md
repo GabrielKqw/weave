@@ -114,7 +114,8 @@ hooks/                lifecycle and shell interception adapters
 skills/               shared workflow and focused operations
 mcp/server.js         dependency-free MCP server (stdio) for non-plugin clients
 commands/weave.toml   OpenCode-style slash command
-scripts/              agent rule generator and reproducible benchmark
+scripts/              agent rule generator, reproducible benchmark, benchmark chart
+docs/benchmark.svg    generated chart of the benchmark table below (not hand-edited)
 tests/                dependency-free Node.js test suite
 ```
 
@@ -160,6 +161,10 @@ Small output passes through. If a reduced report would be as large as the origin
 ```bash
 npm run benchmark
 ```
+
+![Weave benchmark: output reduction per scenario](docs/benchmark.svg)
+
+`docs/benchmark.svg` is generated from these same numbers by `node scripts/generate-benchmark-chart.js` (checked for drift by `npm run check`) - it can't show anything the table below doesn't.
 
 | Scenario | Original | Presented | Reduction | Integrity |
 | --- | ---: | ---: | ---: | --- |
