@@ -174,7 +174,7 @@ Rode `node cli/weave.js gain` dentro de um projeto para medir seu histórico ret
 | Agente | Integração |
 | --- | --- |
 | Claude Code | Skills compartilhadas, eventos de lifecycle e interceptação automática de shell |
-| Codex CLI | Skills compartilhadas surgidas contextualmente, e hooks de lifecycle (injeção de modo/política) via o manifesto do plugin - os dois verificados funcionando de verdade. A interceptação automática de shell não dispara no Codex CLI hoje, mesmo com a confiança do hook concedida e o formato correto no manifesto; parece ser uma limitação do próprio Codex CLI, não algo que um plugin controle (outros plugins Codex que funcionam evitam esse hook por completo) |
+| Codex CLI | Skills compartilhadas e política de lifecycle (injeção de modo) via o manifesto do plugin. Interceptação automática de shell não é suportada atualmente no Codex CLI |
 | Outros agentes | O CLI pode ser chamado diretamente; integração automática com o host não é reivindicada |
 
 Eventos de hook não suportados falham de forma aberta, então a chamada de ferramenta original prossegue sem alterações.
