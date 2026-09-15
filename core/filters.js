@@ -54,9 +54,13 @@ function truncateMiddle(lines, { head = 20, tail = 20, keepPattern = null } = {}
   return { lines: out, omitted };
 }
 
+function stripQuoted(command) {
+  return command.replace(/"(?:\\.|[^"\\])*"|'[^']*'/g, '');
+}
+
 function classify(command) {
   const c = (command || '').trim();
-  const hasShellOperators = /(\s\|\|?\s|\s&&\s|;|>>?|<)/.test(c);
+  const hasShellOperators = /(\s\|\|?\s|\s&&\s|;|>>?|<)/.test(stripQuoted(c));
   if (hasShellOperators) return 'generic';
   if (/\s(--json|--format[= ]json|-o[= ]json)\b/i.test(c)) return 'passthrough';
   if (/^(cat|type|more|less|head|tail|sed|Get-Content)\b/i.test(c)) return 'passthrough';
@@ -109,7 +113,7 @@ function filterGitDiff(stdout) {
 }
 
 function filterGitLog(stdout, command) {
-  if (/--oneline|--format|--pretty|-p\b|--stat|--patch/.test(command || '')) {
+  if (/--oneline|--format|--pretty|-p\b|--stat|--patch|--graph/.test(command || '')) {
     return { presented: stdout, omitted: 0 };
   }
   const lines = toLines(stdout);
@@ -146,7 +150,7 @@ function filterGitLog(stdout, command) {
 
 function filterGrep(stdout, { maxPerFile = 5 } = {}) {
   const lines = toLines(stdout).filter((l) => l.length);
-  const linePattern = /^([^:]+):(\d+):(.*)$/;
+  const linePattern = /^(.+):(\d+):(.*)$/;
   const byFile = new Map();
   const order = [];
   let unmatched = 0;
@@ -215,14 +219,17 @@ function filterGeneric(stdout) {
     return { presented: stdout, omitted: 0 };
   }
   const deduped = dedupeConsecutive(lines);
-  const { lines: kept, omitted } = truncateMiddle(deduped, { head: 20, tail: 20, keepPattern: IMPORTANT_LINE });
-  return { presented: kept.join('\n'), omitted };
+  const dedupedOmitted = lines.length - deduped.length;
+  const { lines: kept, omitted: truncatedOmitted } = truncateMiddle(deduped, { head: 20, tail: 20, keepPattern: IMPORTANT_LINE });
+  return { presented: kept.join('\n'), omitted: dedupedOmitted + truncatedOmitted };
 }
 
 function filterSummary(stdout) {
-  const lines = dedupeConsecutive(toLines(stdout));
-  const { lines: kept, omitted } = truncateMiddle(lines, { head: 6, tail: 12, keepPattern: IMPORTANT_LINE });
-  return { presented: kept.join('\n'), omitted };
+  const lines = toLines(stdout);
+  const deduped = dedupeConsecutive(lines);
+  const dedupedOmitted = lines.length - deduped.length;
+  const { lines: kept, omitted: truncatedOmitted } = truncateMiddle(deduped, { head: 6, tail: 12, keepPattern: IMPORTANT_LINE });
+  return { presented: kept.join('\n'), omitted: dedupedOmitted + truncatedOmitted };
 }
 
 function filterListing(stdout) {
@@ -232,9 +239,11 @@ function filterListing(stdout) {
 }
 
 function filterLogs(stdout) {
-  const lines = dedupeConsecutive(toLines(stdout));
-  const { lines: kept, omitted } = truncateMiddle(lines, { head: 8, tail: 30, keepPattern: IMPORTANT_LINE });
-  return { presented: kept.join('\n'), omitted };
+  const lines = toLines(stdout);
+  const deduped = dedupeConsecutive(lines);
+  const dedupedOmitted = lines.length - deduped.length;
+  const { lines: kept, omitted: truncatedOmitted } = truncateMiddle(deduped, { head: 8, tail: 30, keepPattern: IMPORTANT_LINE });
+  return { presented: kept.join('\n'), omitted: dedupedOmitted + truncatedOmitted };
 }
 
 function reduceOutput(command, stdout, exitCode) {

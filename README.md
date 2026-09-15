@@ -41,7 +41,7 @@ Weave combines the useful ideas behind minimal coding discipline and reduced ter
 ## See Weave in Action
 
 ```console
-$ node bin/weave.js exec -- "git status"
+$ node cli/weave.js exec -- "git status"
 Command: git status
 Exit: 0
 Summary: git status (boilerplate hints removed)
@@ -108,7 +108,7 @@ flowchart LR
 .claude-plugin/       Claude Code manifest and marketplace
 .codex-plugin/        Codex manifest
 .agents/plugins/      Codex marketplace metadata
-bin/weave.js          CLI
+cli/weave.js          CLI
 core/                 execution, modes, filters, redaction, quoting, storage, discover
 hooks/                lifecycle and shell interception adapters
 skills/               shared workflow and focused operations
@@ -170,7 +170,7 @@ npm run benchmark
 
 Results vary with output shape, machine, and active profile in real usage; the script fixes the input so the reduction logic itself stays measurable across changes. These numbers measure bytes presented locally, not API token billing.
 
-Run `node bin/weave.js gain` inside a project to measure its retained Weave history, or `node bin/weave.js discover` to estimate savings missed before Weave was wrapping commands.
+Run `node cli/weave.js gain` inside a project to measure its retained Weave history, or `node cli/weave.js discover` to estimate savings missed before Weave was wrapping commands.
 
 ## Supported Agents
 
@@ -267,7 +267,7 @@ git clone https://github.com/GabrielKqw/weave.git
 cd weave
 claude plugin marketplace add ./ --scope project
 claude plugin install weave@weave --scope project
-node bin/weave.js doctor
+node cli/weave.js doctor
 ```
 
 ### Standalone (no Claude Code or Codex)
@@ -287,13 +287,13 @@ Then either call `weave exec -- <command>` yourself or point an MCP client at `m
 ## Configuration
 
 ```bash
-node bin/weave.js mode
-node bin/weave.js mode ultra
-node bin/weave.js doctor
-node bin/weave.js gain
-node bin/weave.js gain --history
-node bin/weave.js discover
-node bin/weave.js recall <run-id>
+node cli/weave.js mode
+node cli/weave.js mode ultra
+node cli/weave.js doctor
+node cli/weave.js gain
+node cli/weave.js gain --history
+node cli/weave.js discover
+node cli/weave.js recall <run-id>
 ```
 
 `gain --history` lists every recorded run (timestamp, kind, exit code, original vs. presented bytes, redacted command) instead of just the aggregate.

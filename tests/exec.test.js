@@ -28,6 +28,21 @@ test('execAndReport preserves stderr content, kept separate from stdout', () => 
   fs.rmSync(cwd, { recursive: true, force: true });
 });
 
+test('runCommand preserves partial output when capture exceeds maxBuffer', () => {
+  const result = execCore.runCommand('yes x | head -c 22020096');
+  assert.ok(result.stdout.length > 0);
+  assert.notEqual(result.exitCode, 0);
+  assert.match(result.stderr, /weave: bash exited abnormally after partial capture:/);
+});
+
+test('stderr deduplication counts collapsed lines as omitted', () => {
+  const cwd = tmpCwd();
+  const report = execCore.execAndReport('for i in {1..50}; do echo repeated-stderr-line 1>&2; done', { cwd });
+  assert.equal(report.omitted, 49);
+  assert.notEqual(report.recovery, 'nothing to recover - no content was omitted');
+  fs.rmSync(cwd, { recursive: true, force: true });
+});
+
 test('a failing command gets a recoverable id, and weave recall returns the full original output', () => {
   const cwd = tmpCwd();
   const report = execCore.execAndReport('echo boom 1>&2; exit 1', { cwd });
@@ -67,7 +82,7 @@ test('wrapped execution persists under the tool cwd, not the hook process cwd', 
   const processCwd = tmpCwd();
   const toolCwd = tmpCwd();
   const result = spawnSync(process.execPath, [
-    path.join(__dirname, '..', 'bin', 'weave.js'),
+    path.join(__dirname, '..', 'cli', 'weave.js'),
     'exec', '--cwd', toolCwd, '--', 'echo isolated',
   ], { cwd: processCwd, encoding: 'utf8' });
   assert.equal(result.status, 0);
@@ -113,7 +128,7 @@ test('falls back to the original output when a report would be larger', () => {
 test('gain treats legacy oversized reports as zero savings', () => {
   const cwd = tmpCwd();
   storage.saveRun(cwd, { originalBytes: 10, presentedBytes: 20 }, null);
-  const run = spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'weave.js'), 'gain'], {
+  const run = spawnSync(process.execPath, [path.join(__dirname, '..', 'cli', 'weave.js'), 'gain'], {
     cwd,
     encoding: 'utf8',
   });

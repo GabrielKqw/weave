@@ -50,6 +50,16 @@ function runCommand(command, { cwd } = {}) {
     windowsHide: true,
   });
   if (result.error) {
+    const stdout = result.stdout || '';
+    const stderr = result.stderr || '';
+    if (stdout || stderr) {
+      const note = `weave: bash exited abnormally after partial capture: ${result.error.message}`;
+      return {
+        stdout,
+        stderr: stderr ? `${stderr}\n${note}` : note,
+        exitCode: 1,
+      };
+    }
     return {
       stdout: '',
       stderr: `weave: failed to execute via bash: ${result.error.message}`,
@@ -74,8 +84,9 @@ function presentStderr(stderr, exitCode) {
     return { presented: stderr || '', omitted: 0 };
   }
   const deduped = filters.dedupeConsecutive(lines);
-  const { lines: kept, omitted } = filters.truncateMiddle(deduped, { head: 15, tail: 15, keepPattern: filters.IMPORTANT_LINE });
-  return { presented: kept.join('\n'), omitted };
+  const dedupedOmitted = lines.length - deduped.length;
+  const { lines: kept, omitted: truncatedOmitted } = filters.truncateMiddle(deduped, { head: 15, tail: 15, keepPattern: filters.IMPORTANT_LINE });
+  return { presented: kept.join('\n'), omitted: dedupedOmitted + truncatedOmitted };
 }
 
 function execAndReport(command, { cwd } = {}) {

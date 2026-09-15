@@ -51,7 +51,7 @@ test('hook ignores non-PreToolUse events', () => {
 });
 
 test('hook does not double-wrap a command Weave already rewrote', () => {
-  const already = execCore.buildWrappedCommand('git status', 'C:\\weave\\bin\\weave.js');
+  const already = execCore.buildWrappedCommand('git status', 'C:\\weave\\cli\\weave.js');
   const result = runHook({ hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: already } });
   assert.equal(result.status, 0);
   assert.equal(result.stdout, '', 'hook must not rewrite an already-wrapped command');

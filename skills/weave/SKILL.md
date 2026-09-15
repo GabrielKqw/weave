@@ -113,7 +113,7 @@ whole engine for v0.
 
 ## 4. Terminal Intelligence
 
-Weave has its own terminal-output reduction engine (`core/`, `bin/weave.js`,
+Weave has its own terminal-output reduction engine (`core/`, `cli/weave.js`,
 `hooks/`) and no external runtime dependency. A `PreToolUse` hook rewrites
 eligible Bash calls through `weave exec`. The original command runs unchanged
 inside a capturing Bash process. Background commands and commands longer than
@@ -127,10 +127,10 @@ output are always verbatim. Unknown small output is also left untouched.
 The same engine can be invoked directly:
 
 ```
-node "<plugin-root>/bin/weave.js" doctor        # confirm the hook/config are wired up
-node "<plugin-root>/bin/weave.js" mode [name]   # show or set off/lite/full/ultra
-node "<plugin-root>/bin/weave.js" gain          # bytes received vs presented, this project's recorded runs
-node "<plugin-root>/bin/weave.js" recall <id>   # full original output for a run that was filtered or failed
+node "<plugin-root>/cli/weave.js" doctor        # confirm the hook/config are wired up
+node "<plugin-root>/cli/weave.js" mode [name]   # show or set off/lite/full/ultra
+node "<plugin-root>/cli/weave.js" gain          # bytes received vs presented, this project's recorded runs
+node "<plugin-root>/cli/weave.js" recall <id>   # full original output for a run that was filtered or failed
 ```
 
 Every `weave exec` result — whether you triggered it directly or the hook

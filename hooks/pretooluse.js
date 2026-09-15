@@ -28,7 +28,7 @@ function main() {
   const execCore = require('../core/exec');
   if (!execCore.shouldWrap(input.tool_input || {})) return;
 
-  const weaveJsPath = path.join(__dirname, '..', 'bin', 'weave.js');
+  const weaveJsPath = path.join(__dirname, '..', 'cli', 'weave.js');
   const wrapped = execCore.buildWrappedCommand(input.tool_input.command, weaveJsPath, input.cwd);
 
   const output = {

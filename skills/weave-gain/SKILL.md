@@ -5,4 +5,4 @@ description: Show measured terminal-output reduction from local Weave run histor
 
 # Weave Gain
 
-From the project root, run `node <plugin-root>/bin/weave.js gain`. Present the measured totals without estimating missing history or converting bytes into invented token counts.
+From the project root, run `node <plugin-root>/cli/weave.js gain`. Present the measured totals without estimating missing history or converting bytes into invented token counts.
