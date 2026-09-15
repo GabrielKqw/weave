@@ -206,7 +206,7 @@ function filterTestOutput(stdout, exitCode) {
   };
 }
 
-const ERRORISH = /\b(error|exception|traceback|fail(ed|ure)?|denied|refused|panic)\b/i;
+const IMPORTANT_LINE = /\b(error|exception|traceback|fail(ed|ure)?|denied|refused|panic|warn(ing)?|deprecated|vulnerabilit\w*)\b/i;
 
 function filterGeneric(stdout) {
   const lines = toLines(stdout);
@@ -215,13 +215,13 @@ function filterGeneric(stdout) {
     return { presented: stdout, omitted: 0 };
   }
   const deduped = dedupeConsecutive(lines);
-  const { lines: kept, omitted } = truncateMiddle(deduped, { head: 20, tail: 20, keepPattern: ERRORISH });
+  const { lines: kept, omitted } = truncateMiddle(deduped, { head: 20, tail: 20, keepPattern: IMPORTANT_LINE });
   return { presented: kept.join('\n'), omitted };
 }
 
 function filterSummary(stdout) {
   const lines = dedupeConsecutive(toLines(stdout));
-  const { lines: kept, omitted } = truncateMiddle(lines, { head: 6, tail: 12, keepPattern: /\b(error|warning|warn|failed|vulnerabilit|deprecated)\b/i });
+  const { lines: kept, omitted } = truncateMiddle(lines, { head: 6, tail: 12, keepPattern: IMPORTANT_LINE });
   return { presented: kept.join('\n'), omitted };
 }
 
@@ -233,7 +233,7 @@ function filterListing(stdout) {
 
 function filterLogs(stdout) {
   const lines = dedupeConsecutive(toLines(stdout));
-  const { lines: kept, omitted } = truncateMiddle(lines, { head: 8, tail: 30, keepPattern: ERRORISH });
+  const { lines: kept, omitted } = truncateMiddle(lines, { head: 8, tail: 30, keepPattern: IMPORTANT_LINE });
   return { presented: kept.join('\n'), omitted };
 }
 
@@ -314,6 +314,7 @@ function reduceOutput(command, stdout, exitCode) {
 module.exports = {
   FLOOR_BYTES,
   FLOOR_LINES,
+  IMPORTANT_LINE,
   toLines,
   dedupeConsecutive,
   truncateMiddle,

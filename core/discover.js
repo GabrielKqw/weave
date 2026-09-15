@@ -34,9 +34,7 @@ function readJsonLines(file) {
     if (!line.trim()) continue;
     try {
       out.push(JSON.parse(line));
-    } catch {
-      // skip malformed line
-    }
+    } catch {}
   }
   return out;
 }
@@ -71,7 +69,7 @@ function scan({ cwd = process.cwd(), transcriptsDir } = {}) {
   const byKind = {};
 
   for (const file of files) {
-    const pending = new Map(); // tool_use_id -> { command }
+    const pendingCommandByToolUseId = new Map();
     for (const entry of readJsonLines(path.join(dir, file))) {
       const content = entry && entry.message && entry.message.content;
       if (!Array.isArray(content)) continue;
@@ -80,15 +78,15 @@ function scan({ cwd = process.cwd(), transcriptsDir } = {}) {
         for (const item of content) {
           if (item && item.type === 'tool_use' && item.name === 'Bash' && item.input && typeof item.input.command === 'string') {
             if (!isAlreadyWrapped(item.input.command)) {
-              pending.set(item.id, item.input.command);
+              pendingCommandByToolUseId.set(item.id, item.input.command);
             }
           }
         }
       } else if (entry.type === 'user') {
         for (const item of content) {
-          if (item && item.type === 'tool_result' && pending.has(item.tool_use_id)) {
-            const command = pending.get(item.tool_use_id);
-            pending.delete(item.tool_use_id);
+          if (item && item.type === 'tool_result' && pendingCommandByToolUseId.has(item.tool_use_id)) {
+            const command = pendingCommandByToolUseId.get(item.tool_use_id);
+            pendingCommandByToolUseId.delete(item.tool_use_id);
             const text = extractText(item.content);
             if (!text) continue;
             const exitCode = item.is_error ? 1 : 0;
