@@ -1,11 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-// Minimal dependency-free MCP server over stdio (JSON-RPC 2.0, newline-delimited).
-// Lets any MCP-capable client (one without a native Claude Code/Codex plugin
-// integration) read the same Weave policy and local gain/discover reports.
-// Point an MCP client at: node <plugin-root>/mcp/server.js
-
+// stdio transport is newline-delimited JSON-RPC, not LSP-style Content-Length framing.
 const readline = require('readline');
 const modes = require('../core/mode');
 const storage = require('../core/storage');

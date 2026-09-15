@@ -1,11 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-// Regenerates the static policy files for agents that read a rules file
-// instead of using Claude Code/Codex hooks. Single source of truth is
-// core/mode.js so the wording never drifts between agents.
-// Run: node scripts/generate-agent-rules.js
-
+// core/mode.js is the single source of truth so wording can't drift between agents.
 const fs = require('fs');
 const path = require('path');
 const mode = require('../core/mode');

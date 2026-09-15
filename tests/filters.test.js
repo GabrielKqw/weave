@@ -190,6 +190,17 @@ test('log profiles retain errors and recent lines', () => {
   assert.ok(r.presented.includes('service line 99'));
 });
 
+test('generic and logs filters keep warning/deprecation lines, matching summary filter', () => {
+  const raw = Array.from({ length: 80 }, (_, i) => `line ${i}`);
+  raw[40] = 'npm WARN deprecated fs.existsSync legacy usage';
+  const genericResult = filters.reduceOutput('some-unclassified-tool', raw.join('\n'), 0);
+  assert.equal(genericResult.kind, 'generic');
+  assert.ok(genericResult.presented.includes('npm WARN deprecated fs.existsSync legacy usage'));
+
+  const logsResult = filters.reduceOutput('docker logs api', raw.join('\n'), 0);
+  assert.ok(logsResult.presented.includes('npm WARN deprecated fs.existsSync legacy usage'));
+});
+
 test('reduceOutput never reports success on a non-zero exit code', () => {
   const raw = 'some output';
   const r = filters.reduceOutput('some-command', raw, 1);

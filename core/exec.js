@@ -74,7 +74,7 @@ function presentStderr(stderr, exitCode) {
     return { presented: stderr || '', omitted: 0 };
   }
   const deduped = filters.dedupeConsecutive(lines);
-  const { lines: kept, omitted } = filters.truncateMiddle(deduped, { head: 15, tail: 15, keepPattern: /error|exception|fail/i });
+  const { lines: kept, omitted } = filters.truncateMiddle(deduped, { head: 15, tail: 15, keepPattern: filters.IMPORTANT_LINE });
   return { presented: kept.join('\n'), omitted };
 }
 
