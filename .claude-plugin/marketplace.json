@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "weave",
-  "description": "Weave: a lightweight orchestration layer that connects coding agents, project context, terminal tools and verification.",
+  "description": "Weave is a dependency-free engineering layer for Claude Code and Codex. It wraps shell commands to strip noisy successful output while always preserving failures in full, keeps a compact .weave/state.md handoff so context survives across sessions and between agents, and applies one consistent minimalism-and-verification policy so agents reuse existing code, prefer native features over new dependencies, and back every completion claim with real evidence.",
   "owner": {
     "name": "Gabriel Costa",
     "url": "https://github.com/GabrielKqw"
@@ -10,7 +10,7 @@
     {
       "name": "weave",
       "displayName": "Weave",
-      "description": "Different tools. One workflow.",
+      "description": "Weave is a dependency-free engineering layer for Claude Code and Codex. It wraps shell commands to strip noisy successful output while always preserving failures in full, keeps a compact .weave/state.md handoff so context survives across sessions and between agents, and applies one consistent minimalism-and-verification policy so agents reuse existing code, prefer native features over new dependencies, and back every completion claim with real evidence.",
       "source": "./",
       "category": "productivity",
       "version": "0.4.0",

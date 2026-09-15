@@ -1,8 +1,6 @@
 <div align="center">
 
-# WEAVE
-
-### The engineering layer for AI coding agents
+![Weave — the engineering layer for AI coding agents](docs/banner.svg)
 
 Minimal engineering policy, terminal intelligence, context continuity, and verification in one dependency-free plugin.
 
