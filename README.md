@@ -52,24 +52,16 @@ Recovery: weave recall 4f12ab90cd34
 
 The original command runs unchanged. Weave preserves its exit code, reduces only eligible successful output, and stores a redacted recovery capture when content is omitted.
 
-```text
-Agent request
-     |
-     v
-Active Weave mode
-     |
-     v
-Tool call -----> unsupported or unsafe to wrap -----> unchanged
-     |
-     v
-Execute original command
-     |
-     +---- failure ----> complete stdout and stderr
-     |
-     +---- success ----> conservative output profile
-                              |
-                              +---- reduced report
-                              +---- redacted recovery capture
+```mermaid
+flowchart TD
+    A[Agent request] --> B[Active Weave mode]
+    B --> C{Tool call}
+    C -->|unsupported or unsafe to wrap| D[Unchanged]
+    C -->|eligible| E[Execute original command]
+    E -->|failure| F[Complete stdout and stderr]
+    E -->|success| G[Conservative output profile]
+    G --> H[Reduced report]
+    G --> I[Redacted recovery capture]
 ```
 
 ## Capabilities

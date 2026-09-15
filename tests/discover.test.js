@@ -16,8 +16,16 @@ function writeTranscript(dir, lines) {
 }
 
 test('projectTranscriptsDir matches Claude Code\'s real slug format (one dash per separator char)', () => {
-  const dir = discover.projectTranscriptsDir('C:\\Users\\Admin\\Desktop\\Projetos\\Weave');
-  assert.ok(dir.endsWith(path.join('.claude', 'projects', 'C--Users-Admin-Desktop-Projetos-Weave')));
+  // path.resolve() treats separators differently per platform (e.g. "\" is not
+  // a separator on POSIX), so the expected slug must be platform-appropriate -
+  // a hardcoded Windows path/slug pair fails on Linux CI runners and vice versa.
+  if (process.platform === 'win32') {
+    const dir = discover.projectTranscriptsDir('C:\\Users\\Admin\\Desktop\\Projetos\\Weave');
+    assert.ok(dir.endsWith(path.join('.claude', 'projects', 'C--Users-Admin-Desktop-Projetos-Weave')));
+  } else {
+    const dir = discover.projectTranscriptsDir('/home/admin/projetos/weave');
+    assert.ok(dir.endsWith(path.join('.claude', 'projects', '-home-admin-projetos-weave')));
+  }
 });
 
 test('scan reports found: false when no transcript directory exists', () => {
