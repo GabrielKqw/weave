@@ -15,6 +15,11 @@ function writeTranscript(dir, lines) {
   fs.writeFileSync(path.join(dir, 'session.jsonl'), lines.map((l) => JSON.stringify(l)).join('\n') + '\n');
 }
 
+test('projectTranscriptsDir matches Claude Code\'s real slug format (one dash per separator char)', () => {
+  const dir = discover.projectTranscriptsDir('C:\\Users\\Admin\\Desktop\\Projetos\\Weave');
+  assert.ok(dir.endsWith(path.join('.claude', 'projects', 'C--Users-Admin-Desktop-Projetos-Weave')));
+});
+
 test('scan reports found: false when no transcript directory exists', () => {
   const missing = path.join(os.tmpdir(), 'weave-discover-does-not-exist-' + Date.now());
   const result = discover.scan({ transcriptsDir: missing });

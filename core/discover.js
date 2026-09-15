@@ -7,7 +7,7 @@ const filters = require('./filters');
 const { isAlreadyWrapped, formatReport } = require('./exec');
 
 function projectTranscriptsDir(cwd) {
-  const slug = path.resolve(cwd).replace(/[:\\/]+/g, '-');
+  const slug = path.resolve(cwd).replace(/[:\\/]/g, '-');
   return path.join(os.homedir(), '.claude', 'projects', slug);
 }
 
