@@ -174,7 +174,7 @@ Run `node cli/weave.js gain` inside a project to measure its retained Weave hist
 | Agent | Integration |
 | --- | --- |
 | Claude Code | Shared skills, lifecycle events, and automatic shell interception |
-| Codex CLI | Shared skills surfaced contextually, and lifecycle hooks (mode/policy injection) via the plugin manifest - both verified working directly. Automatic shell interception does not currently fire in Codex CLI even with hook trust granted and the correct manifest format; this appears to be a Codex CLI limitation rather than something a plugin can control (other working Codex plugins avoid this hook entirely) |
+| Codex CLI | Shared skills and lifecycle policy (mode injection) via the plugin manifest. Automatic shell interception is not currently supported in Codex CLI |
 | Other agents | The CLI can be called directly; automatic host integration is not claimed |
 
 Unsupported hook events fail open, so the original tool call proceeds unchanged.
