@@ -45,6 +45,12 @@ test('classify() falls back to generic for chained/piped commands', () => {
   assert.equal(filters.classify('npm test; echo done'), 'generic');
 });
 
+test('classify() ignores shell operators inside quoted arguments', () => {
+  assert.equal(filters.classify('git commit -m "fix: update A && B"'), 'summary');
+  assert.equal(filters.classify('rg "foo || bar" src/'), 'grep');
+  assert.equal(filters.classify('git log --oneline | head -20'), 'generic');
+});
+
 test('git status filter removes only the "(use ...)" hint boilerplate', () => {
   const raw = [
     'On branch main',
@@ -113,6 +119,13 @@ test('git log filter does not touch already-explicit formats', () => {
   assert.equal(r.omitted, 0);
 });
 
+test('git log filter bypasses graph output verbatim', () => {
+  const raw = '* commit abcdef1234567890\n| Author: Jane Doe <jane@example.com>\n| Date: Mon Jan 1 00:00:00 2026 +0000';
+  const r = filters.filterGitLog(raw, 'git log --graph');
+  assert.equal(r.presented, raw);
+  assert.equal(r.omitted, 0);
+});
+
 test('grep filter groups repeated file:line matches, preserving early context', () => {
   const lines = [];
   for (let i = 1; i <= 8; i++) lines.push(`src/app.py:${i}:    # TODO item ${i}`);
@@ -121,6 +134,13 @@ test('grep filter groups repeated file:line matches, preserving early context', 
   assert.ok(r.presented.includes('1:     # TODO item 1'));
   assert.ok(r.presented.includes('… 5 more match(es)'));
   assert.equal(r.omitted, 5);
+});
+
+test('grep filter groups relative and Windows absolute paths', () => {
+  const r = filters.filterGrep('src/app.js:7:function bar() {}\nC:\\Users\\Admin\\app.js:14:function foo() {}');
+  assert.ok(r.presented.includes('src/app.js (1 match)'));
+  assert.ok(r.presented.includes('C:\\Users\\Admin\\app.js (1 match)'));
+  assert.equal(r.omitted, 0);
 });
 
 test('test-output filter: repeated passing lines collapse to the tail summary on exit 0', () => {
@@ -199,6 +219,11 @@ test('generic and logs filters keep warning/deprecation lines, matching summary 
 
   const logsResult = filters.reduceOutput('docker logs api', raw.join('\n'), 0);
   assert.ok(logsResult.presented.includes('npm WARN deprecated fs.existsSync legacy usage'));
+});
+
+test('generic filter counts consecutive duplicates as omitted', () => {
+  const r = filters.filterGeneric(Array(50).fill('repeated output line').join('\n'));
+  assert.equal(r.omitted, 49);
 });
 
 test('reduceOutput never reports success on a non-zero exit code', () => {

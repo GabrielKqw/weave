@@ -15,14 +15,14 @@
   },
   "type": "commonjs",
   "bin": {
-    "weave": "bin/weave.js"
+    "weave": "cli/weave.js"
   },
-  "files": ["bin", "core", "hooks", "skills", "mcp", "commands", ".claude-plugin", ".codex-plugin", "README.md", "LICENSE"],
+  "files": ["cli", "core", "hooks", "skills", "mcp", "commands", ".claude-plugin", ".codex-plugin", "README.md", "LICENSE"],
   "scripts": {
     "test": "node --test tests/*.test.js",
     "benchmark": "node scripts/benchmark.js",
     "generate:rules": "node scripts/generate-agent-rules.js",
-    "check": "npm test && node bin/weave.js doctor && node scripts/generate-agent-rules.js --check"
+    "check": "npm test && node cli/weave.js doctor && node scripts/generate-agent-rules.js --check"
   },
   "engines": {
     "node": ">=18"

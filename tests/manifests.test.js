@@ -35,7 +35,7 @@ test('package and plugin versions agree', () => {
   const pkg = readJson('package.json');
   assert.equal(pkg.version, readJson('.claude-plugin/plugin.json').version);
   assert.equal(pkg.version, readJson('.codex-plugin/plugin.json').version);
-  assert.equal(pkg.bin.weave, 'bin/weave.js');
+  assert.equal(pkg.bin.weave, 'cli/weave.js');
   assert.equal(pkg.scripts.test, 'node --test tests/*.test.js');
 });
 
