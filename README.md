@@ -17,6 +17,8 @@ Minimal engineering policy, terminal intelligence, context continuity, and verif
 
 ---
 
+**[Ler em Português](README.pt-BR.md)**
+
 ## Why Weave?
 
 AI coding agents can solve difficult tasks, but long sessions still accumulate noisy terminal output, repeated context, unnecessary abstractions, and unverifiable completion claims. Weave adds a small engineering layer between the agent and its tools.
