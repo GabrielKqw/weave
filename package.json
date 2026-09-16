@@ -1,6 +1,6 @@
 {
   "name": "weave-agent-workflow",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Minimal workflow and terminal intelligence for Claude Code and Codex.",
   "keywords": ["orchestration", "context", "workflow", "terminal", "verification", "mcp", "agent"],
   "author": "Gabriel Costa",
