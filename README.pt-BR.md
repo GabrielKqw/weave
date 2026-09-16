@@ -44,7 +44,7 @@ O Weave combina as ideias úteis por trás da disciplina mínima de código e da
 $ node cli/weave.js exec -- "git status"
 Command: git status
 Exit: 0
-Summary: git status (boilerplate hints removed)
+Summary: git status (long file lists condensed)
 Failures: none
 Omitted: 4 line(s)
 Recovery: weave recall 4f12ab90cd34
@@ -160,7 +160,7 @@ npm run benchmark
 
 | Cenário | Original | Apresentado | Redução | Integridade |
 | --- | ---: | ---: | ---: | --- |
-| `git status`, 30 arquivos não rastreados | 555 B | 555 B | 0,0% | Lista de arquivos preservada |
+| `git status`, 30 arquivos não rastreados | 555 B | 429 B | 22,7% | Contagem de arquivos preservada, listas longas condensadas |
 | Teste sintético de 300 linhas, passando | 6.465 B | 232 B | 96,4% | Resumo final preservado |
 | Asserção falhando | 60 B | 60 B | 0% | Erro e exit 1 preservados |
 | `grep`, 50 correspondências | 2.031 B | 1.846 B | 9,1% | Correspondências agrupadas por arquivo |
