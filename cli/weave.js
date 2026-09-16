@@ -16,8 +16,15 @@ function cmdExec(argv) {
   const cwdIdx = argv.indexOf('--cwd');
   if (cwdIdx !== -1) {
     cwd = argv[cwdIdx + 1];
-    if (!cwd) {
+    if (!cwd || cwd.startsWith('-')) {
       process.stderr.write('weave exec: --cwd requires a directory\n');
+      process.exitCode = 2;
+      return;
+    }
+    try {
+      if (!fs.statSync(cwd).isDirectory()) throw new Error('not a directory');
+    } catch (e) {
+      process.stderr.write(`weave exec: invalid --cwd "${cwd}": ${e.message}\n`);
       process.exitCode = 2;
       return;
     }
@@ -146,7 +153,7 @@ function cmdMode(argv) {
 
 function checkJson(label, filePath, results) {
   if (!fs.existsSync(filePath)) {
-    results.push({ ok: false, label, detail: `missing: ${filePath}` });
+    results.push({ ok: false, label, detail: `missing: ${filePath} - reinstall or reclone the Weave plugin, this file should ship with it` });
     return null;
   }
   try {
@@ -154,7 +161,7 @@ function checkJson(label, filePath, results) {
     results.push({ ok: true, label, detail: filePath });
     return parsed;
   } catch (e) {
-    results.push({ ok: false, label, detail: `invalid JSON in ${filePath}: ${e.message}` });
+    results.push({ ok: false, label, detail: `invalid JSON in ${filePath}: ${e.message} - fix or restore this file from the repo` });
     return null;
   }
 }
@@ -162,14 +169,25 @@ function checkJson(label, filePath, results) {
 function cmdDoctor() {
   const results = [];
 
-  results.push({ ok: true, label: 'node runtime', detail: process.version });
+  const requiredNodeMajor = Number((require('../package.json').engines.node.match(/\d+/) || [])[0]);
+  const actualNodeMajor = Number(process.version.slice(1).split('.')[0]);
+  const nodeOk = actualNodeMajor >= requiredNodeMajor;
+  results.push({
+    ok: nodeOk,
+    label: 'node runtime',
+    detail: nodeOk
+      ? process.version
+      : `${process.version} is below the required >=${requiredNodeMajor} - install a newer Node.js from nodejs.org`,
+  });
 
   const bashPath = execCore.bashExecutable();
   const bashCheck = spawnSync(bashPath, ['-c', 'exit 0'], { windowsHide: true });
   results.push({
     ok: !bashCheck.error && bashCheck.status === 0,
     label: 'bash executable',
-    detail: bashCheck.error ? bashCheck.error.message : bashPath,
+    detail: bashCheck.error
+      ? `${bashCheck.error.message} - install Git Bash (Windows) or ensure "bash" is on PATH`
+      : bashPath,
   });
 
   checkJson('.claude-plugin/plugin.json', path.join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), results);
@@ -178,13 +196,19 @@ function cmdDoctor() {
   const hooksJson = checkJson('hooks/hooks.json', path.join(PLUGIN_ROOT, 'hooks', 'hooks.json'), results);
 
   const hookScriptPath = path.join(PLUGIN_ROOT, 'hooks', 'pretooluse.js');
+  const hookScriptOk = fs.existsSync(hookScriptPath);
   results.push({
-    ok: fs.existsSync(hookScriptPath),
+    ok: hookScriptOk,
     label: 'hooks/pretooluse.js present',
-    detail: hookScriptPath,
+    detail: hookScriptOk ? hookScriptPath : `missing: ${hookScriptPath} - reinstall or reclone the Weave plugin`,
   });
   const lifecyclePath = path.join(PLUGIN_ROOT, 'hooks', 'lifecycle.js');
-  results.push({ ok: fs.existsSync(lifecyclePath), label: 'lifecycle mode hook present', detail: lifecyclePath });
+  const lifecycleOk = fs.existsSync(lifecyclePath);
+  results.push({
+    ok: lifecycleOk,
+    label: 'lifecycle mode hook present',
+    detail: lifecycleOk ? lifecyclePath : `missing: ${lifecyclePath} - reinstall or reclone the Weave plugin`,
+  });
 
   const hasBashMatcher = Boolean(
     hooksJson &&
@@ -192,10 +216,19 @@ function cmdDoctor() {
       Array.isArray(hooksJson.hooks.PreToolUse) &&
       hooksJson.hooks.PreToolUse.some((entry) => String(entry.matcher || '').includes('Bash'))
   );
-  results.push({ ok: hasBashMatcher, label: 'PreToolUse Bash matcher registered', detail: hasBashMatcher ? 'found' : 'not found in hooks.json' });
+  results.push({
+    ok: hasBashMatcher,
+    label: 'PreToolUse Bash matcher registered',
+    detail: hasBashMatcher ? 'found' : `not found in ${path.join(PLUGIN_ROOT, 'hooks', 'hooks.json')} - restore the PreToolUse entry from the repo`,
+  });
 
   const skillPath = path.join(PLUGIN_ROOT, 'skills', 'weave', 'SKILL.md');
-  results.push({ ok: fs.existsSync(skillPath), label: 'skills/weave/SKILL.md present', detail: skillPath });
+  const skillOk = fs.existsSync(skillPath);
+  results.push({
+    ok: skillOk,
+    label: 'skills/weave/SKILL.md present',
+    detail: skillOk ? skillPath : `missing: ${skillPath} - reinstall or reclone the Weave plugin`,
+  });
 
   const weaveDir = path.join(process.cwd(), '.weave');
   let writable = false;
@@ -206,7 +239,7 @@ function cmdDoctor() {
     fs.unlinkSync(probe);
     writable = true;
   } catch (e) {
-    results.push({ ok: false, label: '.weave/ writable', detail: e.message });
+    results.push({ ok: false, label: '.weave/ writable', detail: `${e.message} - check filesystem permissions on ${weaveDir}` });
   }
   if (writable) results.push({ ok: true, label: '.weave/ writable', detail: weaveDir });
 

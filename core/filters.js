@@ -58,6 +58,10 @@ function stripQuoted(command) {
   return command.replace(/"(?:\\.|[^"\\])*"|'[^']*'/g, '');
 }
 
+function stripAnsi(text) {
+  return text.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '');
+}
+
 function classify(command) {
   const c = (command || '').trim();
   const hasShellOperators = /(\s\|\|?\s|\s&&\s|;|>>?|<)/.test(stripQuoted(c));
@@ -116,7 +120,7 @@ function filterGitLog(stdout, command) {
   if (/--oneline|--format|--pretty|-p\b|--stat|--patch|--graph/.test(command || '')) {
     return { presented: stdout, omitted: 0 };
   }
-  const lines = toLines(stdout);
+  const lines = toLines(stdout).map(stripAnsi);
   const out = [];
   let omitted = 0;
   let i = 0;
@@ -136,6 +140,7 @@ function filterGitLog(stdout, command) {
     while (j < lines.length && !commitStart.test(lines[j])) {
       if (/^Author:/.test(lines[j])) author = lines[j].replace(/^Author:\s*/, '').trim();
       else if (/^Date:/.test(lines[j])) date = lines[j].replace(/^Date:\s*/, '').trim();
+      else if (/^Merge:/.test(lines[j])) {}
       else if (lines[j].trim() && !subject) subject = lines[j].trim();
       else if (lines[j].trim()) extraLines++;
       j++;

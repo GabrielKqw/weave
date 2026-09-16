@@ -27,7 +27,12 @@ function main() {
   if (event === 'UserPromptSubmit') {
     const next = mode.requestedMode(input.prompt);
     if (!next) return;
-    mode.writeMode(cwd, next);
+    try {
+      mode.writeMode(cwd, next);
+    } catch (e) {
+      process.stderr.write(`weave: failed to change mode to ${next}: ${e.message}\n`);
+      return;
+    }
     output(event, mode.instructions(next));
     return;
   }

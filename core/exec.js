@@ -122,18 +122,23 @@ function execAndReport(command, { cwd } = {}) {
   const presentedBytes = passthrough ? originalBytes : bytes(formatReport(provisionalReport));
   const omitted = passthrough ? 0 : totalOmitted;
 
-  const id = storage.saveRun(
-    workDir,
-    {
-      command: persistedCommand,
-      exitCode: run.exitCode,
-      kind: reducedOut.kind,
-      originalBytes,
-      presentedBytes,
-      omitted,
-    },
-    rawText
-  );
+  let id = provisionalReport.id;
+  let persisted = false;
+  try {
+    id = storage.saveRun(
+      workDir,
+      {
+        command: persistedCommand,
+        exitCode: run.exitCode,
+        kind: reducedOut.kind,
+        originalBytes,
+        presentedBytes,
+        omitted,
+      },
+      rawText
+    );
+    persisted = true;
+  } catch {}
 
   return {
     ...provisionalReport,
@@ -142,7 +147,9 @@ function execAndReport(command, { cwd } = {}) {
     omitted,
     presentedStdout: passthrough ? run.stdout : reducedOut.presented,
     presentedStderr: passthrough ? run.stderr : reducedErr.presented,
-    recovery: shouldPersistRaw ? `weave recall ${id}` : provisionalReport.recovery,
+    recovery: shouldPersistRaw
+      ? persisted ? `weave recall ${id}` : 'nothing to recover - history could not be saved'
+      : provisionalReport.recovery,
   };
 }
 

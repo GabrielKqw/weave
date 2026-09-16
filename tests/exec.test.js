@@ -28,6 +28,19 @@ test('execAndReport preserves stderr content, kept separate from stdout', () => 
   fs.rmSync(cwd, { recursive: true, force: true });
 });
 
+test('execAndReport returns the command result when run persistence fails', (t) => {
+  const cwd = tmpCwd();
+  t.after(() => fs.rmSync(cwd, { recursive: true, force: true }));
+  const saveRun = storage.saveRun;
+  t.after(() => { storage.saveRun = saveRun; });
+  storage.saveRun = () => { throw new Error('disk unavailable'); };
+  const report = execCore.execAndReport('echo out; echo err 1>&2; exit 7', { cwd });
+  assert.equal(report.exitCode, 7);
+  assert.match(report.presentedStdout, /out/);
+  assert.match(report.presentedStderr, /err/);
+  assert.equal(report.recovery, 'nothing to recover - history could not be saved');
+});
+
 test('runCommand preserves partial output when capture exceeds maxBuffer', () => {
   const result = execCore.runCommand('yes x | head -c 22020096');
   assert.ok(result.stdout.length > 0);
@@ -90,6 +103,25 @@ test('wrapped execution persists under the tool cwd, not the hook process cwd', 
   assert.equal(storage.listRuns(toolCwd).length, 1);
   fs.rmSync(processCwd, { recursive: true, force: true });
   fs.rmSync(toolCwd, { recursive: true, force: true });
+});
+
+test('weave exec rejects missing, option-like, nonexistent, and non-directory --cwd values', (t) => {
+  const root = tmpCwd();
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const file = path.join(root, 'file.txt');
+  fs.writeFileSync(file, 'x');
+  const cli = path.join(__dirname, '..', 'cli', 'weave.js');
+  for (const args of [
+    ['exec', '--cwd'],
+    ['exec', '--cwd', '--', 'echo should-not-run'],
+    ['exec', '--cwd', path.join(root, 'missing'), '--', 'echo should-not-run'],
+    ['exec', '--cwd', file, '--', 'echo should-not-run'],
+  ]) {
+    const result = spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8' });
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /--cwd requires a directory|invalid --cwd/);
+    assert.doesNotMatch(result.stdout, /should-not-run/);
+  }
 });
 
 test('shouldWrap excludes background commands and empty/missing commands', () => {

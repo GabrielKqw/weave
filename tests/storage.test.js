@@ -45,6 +45,21 @@ test('loadRun rejects path traversal ids', () => {
   fs.rmSync(cwd, { recursive: true, force: true });
 });
 
+test('corrupt run metadata is ignored and does not block later saves', (t) => {
+  const cwd = tmpCwd();
+  t.after(() => fs.rmSync(cwd, { recursive: true, force: true }));
+  const dir = storage.runsDir(cwd);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'aaaaaaaaaaaa.json'), '{broken');
+  fs.writeFileSync(path.join(dir, 'bbbbbbbbbbbb.json'), JSON.stringify({ ts: 'invalid', hrns: '1' }));
+  fs.writeFileSync(path.join(dir, 'cccccccccccc.json'), JSON.stringify({ ts: new Date().toISOString(), hrns: 'invalid' }));
+  assert.equal(storage.loadRun(cwd, 'aaaaaaaaaaaa'), null);
+  assert.deepEqual(storage.listRuns(cwd), []);
+  const id = storage.saveRun(cwd, { command: 'echo ok', exitCode: 0 }, null);
+  assert.equal(storage.listRuns(cwd).length, 1);
+  assert.ok(storage.loadRun(cwd, id));
+});
+
 test('pruning trusts the run filename, not an id stored in metadata', () => {
   const cwd = tmpCwd();
   const outside = path.join(cwd, 'outside.json');
