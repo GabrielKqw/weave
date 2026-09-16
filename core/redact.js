@@ -8,6 +8,7 @@ const PATTERNS = [
   /\b(?:gh[pousr]|github_pat)_[A-Za-z0-9_.-]{20,}(?![A-Za-z0-9_.-])/g,
   /\b(Bearer|Authorization:\s*Bearer)\s+[A-Za-z0-9._~+/-]{10,}=*/gi,
   /((?:api[_-]?key|access[_-]?token|secret|password|passwd|token|client[_-]?secret)\s*[:=]\s*)(?:"[^"\r\n]{4,}"|'[^'\r\n]{4,}'|["']?[^\s"']{4,}["']?)/gi,
+  /\beyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\b/g,
 ];
 
 function redact(text) {
@@ -20,6 +21,7 @@ function redact(text) {
   out = out.replace(PATTERNS[4], '[REDACTED:token]');
   out = out.replace(PATTERNS[5], '[REDACTED:bearer]');
   out = out.replace(PATTERNS[6], (_m, prefix) => `${prefix}[REDACTED]`);
+  out = out.replace(PATTERNS[7], '[REDACTED:jwt]');
   return out;
 }
 
