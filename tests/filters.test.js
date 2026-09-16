@@ -7,6 +7,7 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const filters = require('../core/filters');
+const { computeReport } = require('../core/exec');
 
 test('classify() recognizes the initial command families', () => {
   assert.equal(filters.classify('git status'), 'git-status');
@@ -70,7 +71,39 @@ test('git status filter removes only the "(use ...)" hint boilerplate', () => {
   assert.ok(!r.presented.includes('(use "git restore'));
   assert.ok(r.presented.includes('modified:   src/app.py'));
   assert.ok(r.presented.includes('On branch main'));
+  assert.equal(r.presented, [
+    'On branch main',
+    'Changes not staged for commit:',
+    '\tmodified:   src/app.py',
+    '',
+    'no changes added to commit (use "git add" and/or "git commit -a")',
+  ].join('\n'));
   assert.equal(r.omitted, 2);
+});
+
+test('git status filter condenses long file lists per section', () => {
+  const sections = [
+    ['Changes to be committed:', 'new file:   staged'],
+    ['Changes not staged for commit:', 'modified:   modified'],
+    ['Untracked files:', 'untracked'],
+  ];
+  const raw = ['On branch main'];
+  for (const [heading, file] of sections) {
+    raw.push(heading, '  (use "git add <file>..." to update)', ...Array.from({ length: 40 }, (_, i) => `\t${file}-${i}.txt`), '');
+  }
+  const stdout = raw.join('\n');
+  const filtered = filters.filterGitStatus(stdout);
+  const report = computeReport('git status', stdout, '', 0);
+
+  for (const [heading, file] of sections) {
+    assert.ok(filtered.presented.includes(heading));
+    assert.ok(filtered.presented.includes(`\t${file}-9.txt`));
+    assert.ok(!filtered.presented.includes(`\t${file}-10.txt`));
+  }
+  assert.equal(filtered.presented.match(/\.\.\. 30 more file\(s\)/g).length, 3);
+  assert.equal(filtered.omitted, 93);
+  assert.equal(report.omitted, 93);
+  assert.ok(report.presentedBytes < report.originalBytes);
 });
 
 test('git diff filter removes only the index line, keeps hunks intact', () => {

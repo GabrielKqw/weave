@@ -97,16 +97,47 @@ function classify(command) {
   return 'generic';
 }
 
-function filterGitStatus(stdout) {
+function filterGitStatus(stdout, { maxPerSection = 10 } = {}) {
   const lines = toLines(stdout);
   const hint = /^\s*\(use "git [^"]+"[^)]*\)\s*$/;
   const kept = [];
+  let omitted = 0;
   for (const l of lines) {
-    if (hint.test(l)) continue;
-    if (l === '' && kept[kept.length - 1] === '') continue;
+    if (hint.test(l) || (l === '' && kept[kept.length - 1] === '')) {
+      omitted++;
+      continue;
+    }
     kept.push(l);
   }
-  return { presented: kept.join('\n'), omitted: lines.length - kept.length };
+
+  const out = [];
+  let inSection = false;
+  let shown = 0;
+  let sectionOmitted = 0;
+  const flush = () => {
+    if (sectionOmitted) out.push(`\t... ${sectionOmitted} more file(s)`);
+    sectionOmitted = 0;
+  };
+  for (const l of kept) {
+    if (/^\S.*:\s*$/.test(l)) {
+      flush();
+      inSection = true;
+      shown = 0;
+      out.push(l);
+    } else if (inSection && /^\s+\S/.test(l)) {
+      if (shown++ < maxPerSection) out.push(l);
+      else {
+        sectionOmitted++;
+        omitted++;
+      }
+    } else {
+      flush();
+      inSection = false;
+      out.push(l);
+    }
+  }
+  flush();
+  return { presented: out.join('\n'), omitted };
 }
 
 function filterGitDiff(stdout) {
@@ -282,7 +313,7 @@ function reduceOutput(command, stdout, exitCode) {
   switch (kind) {
     case 'git-status': {
       const r = filterGitStatus(stdout);
-      return { kind, presented: r.presented, omitted: r.omitted, summary: 'git status (boilerplate hints removed)', failures: 'none' };
+      return { kind, presented: r.presented, omitted: r.omitted, summary: 'git status (long file lists condensed)', failures: 'none' };
     }
     case 'git-diff': {
       const r = filterGitDiff(stdout);
