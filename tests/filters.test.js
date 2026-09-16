@@ -2,6 +2,10 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { execFileSync } = require('child_process');
 const filters = require('../core/filters');
 
 test('classify() recognizes the initial command families', () => {
@@ -124,6 +128,36 @@ test('git log filter bypasses graph output verbatim', () => {
   const r = filters.filterGitLog(raw, 'git log --graph');
   assert.equal(r.presented, raw);
   assert.equal(r.omitted, 0);
+});
+
+test('git log filter handles ANSI-colored output from a real merge commit', (t) => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'weave-git-log-'));
+  t.after(() => fs.rmSync(cwd, { recursive: true, force: true }));
+  const gitConfig = path.join(cwd, '.gitconfig');
+  fs.writeFileSync(gitConfig, '');
+  const env = { ...process.env, GIT_CONFIG_GLOBAL: gitConfig, GIT_CONFIG_SYSTEM: gitConfig };
+  const git = (...args) => execFileSync('git', args, { cwd, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  git('init', '-b', 'main');
+  git('config', 'user.name', 'Weave Test');
+  git('config', 'user.email', 'weave@example.com');
+  fs.writeFileSync(path.join(cwd, 'root.txt'), 'root');
+  git('add', '.');
+  git('commit', '-m', 'root');
+  git('switch', '-c', 'feature');
+  fs.writeFileSync(path.join(cwd, 'feature.txt'), 'feature');
+  git('add', '.');
+  git('commit', '-m', 'feature change');
+  git('switch', 'main');
+  fs.writeFileSync(path.join(cwd, 'main.txt'), 'main');
+  git('add', '.');
+  git('commit', '-m', 'main change');
+  git('merge', '--no-ff', 'feature', '-m', 'merge feature');
+  const raw = git('log', '-1', '--color=always');
+  const result = filters.filterGitLog(raw, 'git log --color=always');
+  assert.match(result.presented, /^[0-9a-f]{7}\s/);
+  assert.match(result.presented, /merge feature/);
+  assert.doesNotMatch(result.presented, /Merge:/);
+  assert.doesNotMatch(result.presented, /\x1B\[/);
 });
 
 test('grep filter groups repeated file:line matches, preserving early context', () => {

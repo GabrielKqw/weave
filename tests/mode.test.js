@@ -58,3 +58,12 @@ test('UserPromptSubmit stays silent for ordinary prompts', (t) => {
   assert.equal(result.status, 0);
   assert.equal(result.stdout, '');
 });
+
+test('UserPromptSubmit diagnoses a recognized mode change that cannot be written', (t) => {
+  const file = path.join(tempDir(t), 'not-a-directory');
+  fs.writeFileSync(file, 'x');
+  const result = runHook({ hook_event_name: 'UserPromptSubmit', cwd: file, prompt: '/weave full' });
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /weave: failed to change mode to full:/);
+});

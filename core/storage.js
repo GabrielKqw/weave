@@ -20,6 +20,18 @@ function generateId() {
   return crypto.randomBytes(6).toString('hex');
 }
 
+function readRecord(filePath, id) {
+  try {
+    const record = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    if (!record || typeof record !== 'object' || Array.isArray(record)) return null;
+    if (typeof record.ts !== 'string' || !Number.isFinite(Date.parse(record.ts))) return null;
+    if (record.hrns !== undefined && (typeof record.hrns !== 'string' || !/^\d+$/.test(record.hrns))) return null;
+    return { ...record, id };
+  } catch {
+    return null;
+  }
+}
+
 function saveRun(cwd, meta, rawText) {
   const dir = runsDir(cwd);
   ensureDir(dir);
@@ -41,7 +53,8 @@ function loadRun(cwd, id) {
   const dir = runsDir(cwd);
   const metaPath = path.join(dir, `${id}.json`);
   if (!fs.existsSync(metaPath)) return null;
-  const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+  const meta = readRecord(metaPath, id);
+  if (!meta) return null;
   const rawPath = path.join(dir, `${id}.raw.txt`);
   const raw = fs.existsSync(rawPath) ? fs.readFileSync(rawPath, 'utf8') : null;
   return { meta, raw };
@@ -53,13 +66,7 @@ function listRuns(cwd) {
   return fs
     .readdirSync(dir)
     .filter((f) => f.endsWith('.json') && RUN_ID_RE.test(path.basename(f, '.json')))
-    .map((f) => {
-      try {
-        return { ...JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')), id: path.basename(f, '.json') };
-      } catch {
-        return null;
-      }
-    })
+    .map((f) => readRecord(path.join(dir, f), path.basename(f, '.json')))
     .filter(Boolean)
     .sort((a, b) => {
       const byTs = new Date(a.ts) - new Date(b.ts);
