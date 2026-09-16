@@ -1,11 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-const filters = require('../core/filters');
-
-function bytes(s) {
-  return Buffer.byteLength(s || '', 'utf8');
-}
+const { computeReport } = require('../core/exec');
 
 const SCENARIOS = [
   {
@@ -41,9 +37,9 @@ const SCENARIOS = [
 
 function run() {
   return SCENARIOS.map((s) => {
-    const r = filters.reduceOutput(s.command, s.stdout, s.exitCode);
-    const original = bytes(s.stdout);
-    const presented = bytes(r.presented);
+    const r = computeReport(s.command, s.stdout, '', s.exitCode);
+    const original = r.originalBytes;
+    const presented = r.presentedBytes;
     const pct = original > 0 ? 100 * (1 - presented / original) : 0;
     const integrity = s.exitCode !== 0 ? 'error + exit preserved' : 'summary/lines preserved';
     return { label: s.label, original, presented, pct, integrity };

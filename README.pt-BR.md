@@ -148,7 +148,7 @@ Saída pequena passa direto. Se um relatório reduzido ficasse do mesmo tamanho 
 
 ## Benchmarks
 
-`scripts/benchmark.js` roda o `core/filters.js` contra entradas sintéticas fixas — sem shell, sem I/O — então esses números são reproduzíveis por qualquer pessoa:
+`scripts/benchmark.js` roda o mesmo `computeReport()` usado na execução real (`core/exec.js`, apoiado em `core/filters.js`) contra entradas sintéticas fixas — sem shell, sem I/O — então esses números são reproduzíveis por qualquer pessoa e não podem divergir silenciosamente do que o `weave exec` realmente apresenta:
 
 ```bash
 npm run benchmark
@@ -160,10 +160,10 @@ npm run benchmark
 
 | Cenário | Original | Apresentado | Redução | Integridade |
 | --- | ---: | ---: | ---: | --- |
-| `git status`, 30 arquivos não rastreados | 555 B | 490 B | 11,7% | Lista de arquivos preservada |
-| Teste sintético de 300 linhas, passando | 6.465 B | 83 B | 98,7% | Resumo final preservado |
+| `git status`, 30 arquivos não rastreados | 555 B | 555 B | 0,0% | Lista de arquivos preservada |
+| Teste sintético de 300 linhas, passando | 6.465 B | 232 B | 96,4% | Resumo final preservado |
 | Asserção falhando | 60 B | 60 B | 0% | Erro e exit 1 preservados |
-| `grep`, 50 correspondências | 2.031 B | 1.676 B | 17,5% | Correspondências agrupadas por arquivo |
+| `grep`, 50 correspondências | 2.031 B | 1.846 B | 9,1% | Correspondências agrupadas por arquivo |
 
 Os resultados variam com o formato da saída, a máquina e o perfil ativo no uso real; o script fixa a entrada para que a própria lógica de redução permaneça mensurável entre mudanças. Esses números medem bytes apresentados localmente, não faturamento de tokens de API.
 

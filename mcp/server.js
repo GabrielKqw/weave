@@ -6,8 +6,9 @@ const readline = require('readline');
 const modes = require('../core/mode');
 const storage = require('../core/storage');
 const discover = require('../core/discover');
+const { version } = require('../package.json');
 
-const SERVER_INFO = { name: 'weave-mcp', version: '1.0.0' };
+const SERVER_INFO = { name: 'weave-mcp', version };
 
 const TOOLS = [
   {

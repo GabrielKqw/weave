@@ -157,6 +157,18 @@ test('falls back to the original output when a report would be larger', () => {
   fs.rmSync(cwd, { recursive: true, force: true });
 });
 
+test('computeReport matches execAndReport report sizing and passthrough', () => {
+  const cwd = tmpCwd();
+  const command = 'for i in {1..80}; do echo "PASS test/case-$i.js"; done; echo "Tests: 80 passed, 80 total"';
+  const run = execCore.runCommand(command, { cwd });
+  const computed = execCore.computeReport(command, run.stdout, run.stderr, run.exitCode);
+  const actual = execCore.execAndReport(command, { cwd });
+  assert.equal(actual.passthrough, computed.passthrough);
+  assert.equal(actual.originalBytes, computed.originalBytes);
+  assert.equal(actual.presentedBytes, computed.presentedBytes);
+  fs.rmSync(cwd, { recursive: true, force: true });
+});
+
 test('gain treats legacy oversized reports as zero savings', () => {
   const cwd = tmpCwd();
   storage.saveRun(cwd, { originalBytes: 10, presentedBytes: 20 }, null);

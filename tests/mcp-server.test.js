@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
 const { spawn } = require('child_process');
+const { version } = require('../package.json');
 
 const SERVER = path.join(__dirname, '..', 'mcp', 'server.js');
 
@@ -55,6 +56,7 @@ test('mcp server: initialize returns server info and tool capability', async () 
     const res = await nextResponse();
     assert.equal(res.id, 1);
     assert.equal(res.result.serverInfo.name, 'weave-mcp');
+    assert.equal(res.result.serverInfo.version, version);
     assert.ok(res.result.capabilities.tools);
   });
 });
