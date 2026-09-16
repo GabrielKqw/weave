@@ -1,2 +1,3 @@
 .weave/runs/
+.weave/reads.json
 .claude/
