@@ -21,7 +21,7 @@ Minimal engineering policy, terminal intelligence, context continuity, and verif
 
 ## Why Weave?
 
-AI coding agents can solve difficult tasks, but long sessions still accumulate noisy terminal output, repeated context, unnecessary abstractions, and unverifiable completion claims. Weave adds a small engineering layer between the agent and its tools.
+Long agent sessions rot the same way every time: terminal output balloons, the same file gets re-read, an unrequested abstraction creeps in, and "done" gets claimed without proof. Weave is the layer that stops that pattern — one dependency-free plugin that cuts eligible successful output by up to 96.4% (see [Benchmarks](#benchmarks)), keeps a compact `.weave/state.md` handoff between Claude Code and Codex CLI, and enforces reuse-first, evidence-before-claims engineering discipline.
 
 ```mermaid
 flowchart TB
@@ -211,6 +211,8 @@ node scripts/generate-agent-rules.js --check  # CI: fail if the checked-in files
 }
 ```
 
+![](docs/divider.svg)
+
 ## Installation
 
 ### Requirements
@@ -354,6 +356,18 @@ The direction was informed by the public work of [Ponytail](https://github.com/D
 
 ## License
 
-Created by **Gabriel Costa**. Contact: [LinkedIn](https://www.linkedin.com/in/gabriel-costa-940b89276/) or Discord `tanjas1`.
-
 Licensed under the [MIT License](LICENSE).
+
+![](docs/divider.svg)
+
+<div align="center">
+
+<img src="docs/mark.svg" width="40" height="40" alt="Weave mark" />
+
+**Weave** — the engineering layer for AI coding agents
+
+[GitHub](https://github.com/GabrielKqw/weave) &middot; [LinkedIn](https://www.linkedin.com/in/gabriel-costa-940b89276/) &middot; Discord `tanjas1`
+
+Created by **Gabriel Costa**
+
+</div>
