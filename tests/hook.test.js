@@ -47,6 +47,24 @@ test('hook never touches non-Bash tools (e.g. Read, Grep, Glob)', () => {
   }
 });
 
+test('hook rewrites ordinary Claude Bash input without a swallowed ReferenceError', () => {
+  const result = runHook({
+    hook_event_name: 'PreToolUse',
+    tool_name: 'Bash',
+    tool_input: { command: 'git status' },
+  });
+  assert.equal(result.status, 0);
+  // An undefined `event` in the Codex guard used to throw and silently emit nothing.
+  assert.notEqual(result.stdout, '', 'ordinary Claude input must produce a rewrite, not silently fail open');
+  const out = JSON.parse(result.stdout);
+  assert.equal(out.hookSpecificOutput.hookEventName, 'PreToolUse');
+  assert.equal(out.hookSpecificOutput.permissionDecision, 'allow');
+  assert.equal(
+    out.hookSpecificOutput.updatedInput.command,
+    execCore.buildWrappedCommand('git status', path.join(__dirname, '..', 'cli', 'weave.js'))
+  );
+});
+
 test('hook does not rewrite commands inside Codex', () => {
   const result = runHook(
     { hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'git status' } },

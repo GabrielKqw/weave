@@ -5,7 +5,7 @@ const path = require('path');
 
 function readStdin() {
   try {
-    return require('fs').readFileSync(0, 'utf8');
+    return require('fs').readFileSync(0, 'utf8').replace(/^\uFEFF/, '');
   } catch {
     return '';
   }

@@ -7,7 +7,7 @@ const readlog = require('../core/readlog');
 
 function readStdin() {
   try {
-    return fs.readFileSync(0, 'utf8');
+    return fs.readFileSync(0, 'utf8').replace(/^\uFEFF/, '');
   } catch {
     return '';
   }
