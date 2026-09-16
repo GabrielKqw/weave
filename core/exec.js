@@ -89,30 +89,19 @@ function presentStderr(stderr, exitCode) {
   return { presented: kept.join('\n'), omitted: dedupedOmitted + truncatedOmitted };
 }
 
-function execAndReport(command, { cwd } = {}) {
-  const workDir = cwd || process.cwd();
-  const run = runCommand(command, { cwd: workDir });
-  const reducedOut = filters.reduceOutput(command, run.stdout, run.exitCode);
-  const reducedErr = presentStderr(run.stderr, run.exitCode);
+function computeReport(command, stdout, stderr, exitCode) {
+  const reducedOut = filters.reduceOutput(command, stdout, exitCode);
+  const reducedErr = presentStderr(stderr, exitCode);
 
   const totalOmitted = reducedOut.omitted + reducedErr.omitted;
-  const shouldPersistRaw = run.exitCode !== 0 || totalOmitted > 0;
-
-  const originalBytes = bytes(run.stdout) + bytes(run.stderr);
-  let rawText = null;
-  if (shouldPersistRaw) {
-    rawText = redact.redact(
-      [`$ ${command}`, '', '[stdout]', run.stdout, '', '[stderr]', run.stderr, '', `[exit] ${run.exitCode}`].join('\n')
-    );
-  }
-
-  const persistedCommand = redact.redact(command);
+  const shouldPersistRaw = exitCode !== 0 || totalOmitted > 0;
+  const originalBytes = bytes(stdout) + bytes(stderr);
   const provisionalReport = {
     id: '000000000000',
     command,
-    exitCode: run.exitCode,
+    exitCode,
     summary: reducedOut.summary,
-    failures: run.exitCode === 0 && reducedOut.failures === 'none' ? 'none' : reducedOut.failures,
+    failures: exitCode === 0 && reducedOut.failures === 'none' ? 'none' : reducedOut.failures,
     omitted: totalOmitted,
     recovery: shouldPersistRaw ? 'weave recall 000000000000' : 'nothing to recover - no content was omitted',
     presentedStdout: reducedOut.presented,
@@ -122,18 +111,40 @@ function execAndReport(command, { cwd } = {}) {
   const presentedBytes = passthrough ? originalBytes : bytes(formatReport(provisionalReport));
   const omitted = passthrough ? 0 : totalOmitted;
 
-  let id = provisionalReport.id;
+  return {
+    ...provisionalReport,
+    passthrough,
+    originalBytes,
+    presentedBytes,
+    omitted,
+    presentedStdout: passthrough ? stdout : reducedOut.presented,
+    presentedStderr: passthrough ? stderr : reducedErr.presented,
+    kind: reducedOut.kind,
+    shouldPersistRaw,
+  };
+}
+
+function execAndReport(command, { cwd } = {}) {
+  const workDir = cwd || process.cwd();
+  const run = runCommand(command, { cwd: workDir });
+  const report = computeReport(command, run.stdout, run.stderr, run.exitCode);
+
+  const rawText = report.shouldPersistRaw
+    ? redact.redact([`$ ${command}`, '', '[stdout]', run.stdout, '', '[stderr]', run.stderr, '', `[exit] ${run.exitCode}`].join('\n'))
+    : null;
+
+  let id = report.id;
   let persisted = false;
   try {
     id = storage.saveRun(
       workDir,
       {
-        command: persistedCommand,
+        command: redact.redact(command),
         exitCode: run.exitCode,
-        kind: reducedOut.kind,
-        originalBytes,
-        presentedBytes,
-        omitted,
+        kind: report.kind,
+        originalBytes: report.originalBytes,
+        presentedBytes: report.presentedBytes,
+        omitted: report.omitted,
       },
       rawText
     );
@@ -141,15 +152,11 @@ function execAndReport(command, { cwd } = {}) {
   } catch {}
 
   return {
-    ...provisionalReport,
+    ...report,
     id,
-    passthrough,
-    omitted,
-    presentedStdout: passthrough ? run.stdout : reducedOut.presented,
-    presentedStderr: passthrough ? run.stderr : reducedErr.presented,
-    recovery: shouldPersistRaw
+    recovery: report.shouldPersistRaw
       ? persisted ? `weave recall ${id}` : 'nothing to recover - history could not be saved'
-      : provisionalReport.recovery,
+      : report.recovery,
   };
 }
 
@@ -180,6 +187,7 @@ module.exports = {
   shouldWrap,
   buildWrappedCommand,
   runCommand,
+  computeReport,
   execAndReport,
   formatReport,
 };
