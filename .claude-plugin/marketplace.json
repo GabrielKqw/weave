@@ -13,7 +13,7 @@
       "description": "Weave is a dependency-free engineering layer for Claude Code and Codex. It wraps shell commands to strip noisy successful output while always preserving failures in full, keeps a compact .weave/state.md handoff so context survives across sessions and between agents, and applies one consistent minimalism-and-verification policy so agents reuse existing code, prefer native features over new dependencies, and back every completion claim with real evidence.",
       "source": "./",
       "category": "productivity",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "author": {
         "name": "Gabriel Costa",
         "url": "https://github.com/GabrielKqw"

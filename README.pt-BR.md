@@ -11,7 +11,7 @@ Política mínima de engenharia, inteligência de terminal, continuidade de cont
 [![CI](https://github.com/GabrielKqw/weave/actions/workflows/ci.yml/badge.svg)](https://github.com/GabrielKqw/weave/actions/workflows/ci.yml)
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/runtime_dependencies-0-111111)
-![Version](https://img.shields.io/badge/version-0.5.0-2563eb)
+![Version](https://img.shields.io/badge/version-0.5.1-2563eb)
 
 </div>
 
@@ -277,7 +277,7 @@ O pacote não tem dependência de runtime e é empacotável via npm para agentes
 git clone https://github.com/GabrielKqw/weave.git
 cd weave
 npm pack
-npm install --global ./weave-agent-workflow-0.5.0.tgz
+npm install --global ./weave-agent-workflow-0.5.1.tgz
 weave doctor
 ```
 
