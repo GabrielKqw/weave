@@ -4,7 +4,7 @@
 
 Política mínima de engenharia, inteligência de terminal, continuidade de contexto e verificação em um único plugin sem dependências.
 
-**Claude Code x Codex x Agentes de IA**
+**Claude Code x Codex CLI**
 
 [Por que o Weave?](#por-que-o-weave) | [Veja em ação](#veja-o-weave-em-ação) | [Arquitetura](#arquitetura) | [Benchmarks](#benchmarks) | [Instalação](#instalação)
 
@@ -36,7 +36,7 @@ flowchart TB
     V --> R
 ```
 
-O Weave combina as ideias úteis por trás da disciplina mínima de código e da redução de ruído de terminal, sem copiar código do Ponytail ou do RTK e sem depender de nenhum dos dois em tempo de execução. Usa apenas módulos da biblioteca padrão do Node.js: sem daemon, banco de dados, servidor MCP ou pacote de terceiros.
+O Weave combina as ideias úteis por trás da disciplina mínima de código e da redução de ruído de terminal, sem copiar código do Ponytail ou do RTK e sem depender de nenhum dos dois em tempo de execução. O núcleo usa apenas módulos da biblioteca padrão do Node.js: sem daemon, banco de dados ou pacote de terceiros. Um servidor MCP opcional e sem dependências vem embutido em `mcp/server.js` para clientes com suporte a MCP que não têm um plugin nativo do Weave (veja [Servidor MCP](#servidor-mcp)).
 
 ## Veja o Weave em Ação
 
@@ -73,7 +73,7 @@ flowchart TD
 | Inteligência de terminal | Embrulha chamadas de shell elegíveis e remove saída repetitiva bem-sucedida |
 | Integridade de falha | Preserva saídas não-zero, stdout, stderr e linhas de diagnóstico |
 | Recuperação | Guarda capturas completas redigidas em `.weave/runs/` |
-| Continuidade de contexto | Mantém um handoff compacto em `.weave/state.md` |
+| Continuidade de contexto | Orienta Claude Code e Codex CLI a manter um handoff compacto em `.weave/state.md` |
 | Operações focadas | Fornece skills de review, auditoria de repositório, débito, ganho e ajuda |
 | Arquivos de regra multi-agente | Gera o mesmo texto de política pro Cursor, Cline, Windsurf, e qualquer agente que leia `AGENTS.md` |
 | Servidor MCP | Serve `get_policy`, `gain` e `discover` via stdio JSON-RPC pra clientes com capacidade MCP sem integração nativa de plugin |
@@ -131,7 +131,7 @@ O modo ativo é armazenado em `.weave/mode` e sobrevive a novas sessões no mesm
 | `full` | Aplica a política completa de minimalismo, validação, segurança e handoff |
 | `ultra` | Questiona o escopo agressivamente e exige o menor resultado adequado |
 
-O hook de lifecycle injeta a política ativa quando uma sessão ou subagente inicia. Somente prompts exatos `/weave <modo>` trocam de modo.
+O hook de lifecycle injeta a política ativa quando uma sessão ou subagente inicia. O modo só troca com um prompt exato: `/weave <modo>`, `@weave <modo>`, `$weave <modo>`, ou `weave mode <modo>` para trocar, e `stop weave` ou `normal mode` para desativar.
 
 ## Perfis de Terminal
 
@@ -305,10 +305,12 @@ O Weave escreve apenas:
 .weave/mode
 .weave/state.md
 .weave/runs/<id>.json
-.weave/runs/<id>.txt
+.weave/runs/<id>.raw.txt
 ```
 
 O histórico é podado para 200 runs ou 14 dias. Credenciais reconhecíveis, chaves privadas, cabeçalhos de autorização e credenciais em URL são redigidos antes da persistência. A redação é uma defesa em profundidade, não uma garantia; segredos não deveriam ser impressos num terminal.
+
+Versionar `.weave/state.md` é uma escolha por projeto: versione quando o handoff entre Claude Code e Codex CLI deve ser compartilhado com o time e revisado como qualquer outro arquivo; coloque no `.gitignore` quando for contexto local ou o repositório ainda não tiver uma convenção. Siga a convenção do próprio repositório quando já existir uma, e nunca escreva segredos ali, seja qual for a escolha.
 
 ## Skills Focadas
 
@@ -346,7 +348,7 @@ Mantenha as mudanças pequenas, sem dependências, e apoiadas por um teste focad
 
 ## Limites do Projeto
 
-O Weave visa a sobreposição útil entre disciplina mínima de código e redução de saída de terminal. Não oferece compatibilidade linha-a-linha com outro projeto, um transporte Codex-para-Claude, armazenamento remoto, um daemon, delegação automática, ou instalação global.
+O Weave visa a sobreposição útil entre disciplina mínima de código e redução de saída de terminal. Não oferece compatibilidade linha-a-linha com outro projeto, um transporte Codex-para-Claude, armazenamento remoto, um daemon, delegação automática, ou instalação automática/global entre projetos. Você ainda pode rodar `npm install --global` na própria CLI a partir de um clone local (veja [Standalone](#standalone-sem-claude-code-ou-codex)) — o Weave só nunca faz isso por você.
 
 A direção foi informada pelo trabalho público do [Ponytail](https://github.com/DietrichGebert/ponytail) e do [RTK](https://github.com/byx-darwin/rtk). O código, as políticas, o formato de armazenamento, os hooks e os testes do Weave são independentes.
 

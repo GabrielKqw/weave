@@ -127,14 +127,16 @@ output are always verbatim. Unknown small output is also left untouched.
 The same engine can be invoked directly:
 
 ```
-node "<plugin-root>/cli/weave.js" doctor        # confirm the hook/config are wired up
+node "<plugin-root>/cli/weave.js" doctor        # static sanity check of the installation (files, config, permissions) - not an end-to-end lifecycle test
 node "<plugin-root>/cli/weave.js" mode [name]   # show or set off/lite/full/ultra
 node "<plugin-root>/cli/weave.js" gain          # bytes received vs presented, this project's recorded runs
 node "<plugin-root>/cli/weave.js" recall <id>   # full original output for a run that was filtered or failed
 ```
 
-Every `weave exec` result — whether you triggered it directly or the hook
-did — is reported in this shape:
+When a reduced report would actually be smaller than the original output,
+the `weave exec` result — whether you triggered it directly or the hook
+did — is reported in this shape (otherwise Weave passes the original
+stdout/stderr through verbatim, with no envelope):
 
 ```
 Command: <exact command run>
