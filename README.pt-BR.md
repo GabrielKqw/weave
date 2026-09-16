@@ -21,7 +21,7 @@ Política mínima de engenharia, inteligência de terminal, continuidade de cont
 
 ## Por que o Weave?
 
-Agentes de codificação com IA conseguem resolver tarefas difíceis, mas sessões longas ainda acumulam saída de terminal ruidosa, contexto repetido, abstrações desnecessárias e afirmações de conclusão que não podem ser verificadas. O Weave adiciona uma pequena camada de engenharia entre o agente e suas ferramentas.
+Sessões longas de agentes apodrecem sempre do mesmo jeito: a saída de terminal incha, o mesmo arquivo é relido, uma abstração não pedida se infiltra, e "pronto" é declarado sem prova. O Weave é a camada que interrompe esse padrão — um único plugin sem dependências que corta a saída bem-sucedida elegível em até 96,4% (veja [Benchmarks](#benchmarks)), mantém um handoff compacto em `.weave/state.md` entre Claude Code e Codex CLI, e aplica uma disciplina de engenharia baseada em reaproveitamento primeiro e evidência antes de afirmações.
 
 ```mermaid
 flowchart TB
@@ -211,6 +211,8 @@ node scripts/generate-agent-rules.js --check  # CI: falha se os arquivos commita
 }
 ```
 
+![](docs/divider.svg)
+
 ## Instalação
 
 ### Requisitos
@@ -354,6 +356,18 @@ A direção foi informada pelo trabalho público do [Ponytail](https://github.co
 
 ## Licença
 
-Criado por **Gabriel Costa**. Contato: [LinkedIn](https://www.linkedin.com/in/gabriel-costa-940b89276/) ou Discord `tanjas1`.
-
 Licenciado sob a [Licença MIT](LICENSE).
+
+![](docs/divider.svg)
+
+<div align="center">
+
+<img src="docs/mark.svg" width="40" height="40" alt="Marca do Weave" />
+
+**Weave** — a camada de engenharia para agentes de codificação com IA
+
+[GitHub](https://github.com/GabrielKqw/weave) &middot; [LinkedIn](https://www.linkedin.com/in/gabriel-costa-940b89276/) &middot; Discord `tanjas1`
+
+Criado por **Gabriel Costa**
+
+</div>

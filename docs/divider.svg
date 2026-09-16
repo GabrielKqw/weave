@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 32" width="100%" height="32" role="img" aria-labelledby="title">
+<title id="title">Section divider</title>
+<path d="M -20 20 C 180 8, 380 32, 580 20 S 980 8, 1220 20" fill="none" stroke="#2a3444" stroke-width="2"/>
+<path d="M -20 16 C 180 4, 380 28, 580 16 S 980 4, 1220 16" fill="none" stroke="#2a78d6" stroke-width="2"/>
+<path d="M -20 12 C 180 0, 380 24, 580 12 S 980 0, 1220 12" fill="none" stroke="#5598e7" stroke-width="2"/>
+</svg>
