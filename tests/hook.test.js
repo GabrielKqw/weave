@@ -8,9 +8,12 @@ const execCore = require('../core/exec');
 
 const HOOK_PATH = path.join(__dirname, '..', 'hooks', 'pretooluse.js');
 
-function runHook(inputObj) {
+function runHook(inputObj, env = {}) {
   const input = typeof inputObj === 'string' ? inputObj : JSON.stringify(inputObj);
-  return spawnSync('node', [HOOK_PATH], { input, encoding: 'utf8' });
+  const cleanEnv = { ...process.env };
+  delete cleanEnv.CODEX_SESSION_ID;
+  delete cleanEnv.CODEX_THREAD_ID;
+  return spawnSync('node', [HOOK_PATH], { input, encoding: 'utf8', env: { ...cleanEnv, ...env } });
 }
 
 test('hook JSON protocol: rewrites an eligible Bash command with the expected shape', () => {
@@ -42,6 +45,15 @@ test('hook never touches non-Bash tools (e.g. Read, Grep, Glob)', () => {
     assert.equal(result.status, 0);
     assert.equal(result.stdout, '', `expected no output for tool_name ${toolName}`);
   }
+});
+
+test('hook does not rewrite commands inside Codex', () => {
+  const result = runHook(
+    { hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'git status' } },
+    { CODEX_SESSION_ID: 'codex-session' }
+  );
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, '');
 });
 
 test('hook ignores non-PreToolUse events', () => {
