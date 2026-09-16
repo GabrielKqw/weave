@@ -11,21 +11,23 @@ test('redacts AWS access key IDs', () => {
 });
 
 test('redacts GitHub-style tokens', () => {
-  const out = redact('token is ghp_1234567890abcdefghijklmnopqrstuvwx');
-  assert.ok(!out.includes('ghp_1234567890abcdefghijklmnopqrstuvwx'));
+  const classic = 'ghp_1234567890abcdefghijklmnopqrstuvwx';
+  const fineGrained = 'github_pat_11AA22bb33CC44dd55EE66ff77GG88hh99II';
+  const out = redact(`token is ${classic}\nfine-grained: '${fineGrained}'`);
+  assert.ok(!out.includes(classic));
+  assert.ok(!out.includes(fineGrained));
   assert.ok(out.includes('[REDACTED:token]'));
 });
 
 test('redacts Authorization: Bearer headers', () => {
-  const out = redact('Authorization: Bearer sk-abcdef1234567890');
+  const out = redact('Authorization: Bearer sk-abcdef1234567890\nauthorization: bearer abc+def/ghi~jkl==');
   assert.ok(!out.includes('sk-abcdef1234567890'));
+  assert.ok(!out.includes('abc+def/ghi~jkl=='));
 });
 
 test('redacts generic password/secret/token assignments', () => {
-  const out = redact('DB_PASSWORD=hunter2verysecret\nsecret: topsecretvalue123');
-  assert.ok(!out.includes('hunter2verysecret'));
-  assert.ok(!out.includes('topsecretvalue123'));
-  assert.ok(out.includes('[REDACTED]'));
+  const out = redact('password=hunter2verysecret\nsecret: \'top secret value\'\nAPI_TOKEN="abc123xyz456verylong"');
+  assert.equal(out, 'password=[REDACTED]\nsecret: [REDACTED]\nAPI_TOKEN=[REDACTED]');
 });
 
 test('redacts private keys, API keys, and URL credentials', () => {
