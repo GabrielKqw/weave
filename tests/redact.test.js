@@ -42,6 +42,14 @@ test('redacts private keys, API keys, and URL credentials', () => {
   assert.ok(out.includes('postgres://admin:[REDACTED]@example.test/db'));
 });
 
+test('redacts a bare JWT with no surrounding keyword (e.g. inside an assertion diff)', () => {
+  const jwt =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiJ9.XCyYgZHPMURqlNgnAJzAWtcay9l8VvUEqv_5WYFei3U';
+  const out = redact(`AssertionError: '${jwt}' == 'expected'`);
+  assert.ok(!out.includes(jwt));
+  assert.ok(out.includes('[REDACTED:jwt]'));
+});
+
 test('leaves ordinary output alone', () => {
   const text = '5 passed, 0 failed in 1.2s\nmodified: src/app.py';
   assert.equal(redact(text), text);
