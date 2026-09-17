@@ -261,9 +261,15 @@ codex plugin marketplace upgrade weave
 
 ### Antigravity CLI
 
+Install from a local clone of the repository:
+
 ```bash
-agy plugin install <path>
+git clone https://github.com/GabrielKqw/weave.git
+cd weave
+agy plugin install ./
 ```
+
+Alternatively, place or link the checkout into `~/.gemini/config/plugins/weave` or `.agents/plugins/weave`. Antigravity CLI loads Weave's skills and project rules (`GEMINI.md`/`AGENTS.md`) automatically.
 
 ### Local development
 
@@ -291,38 +297,35 @@ weave doctor
 
 Then either call `weave exec -- <command>` yourself or point an MCP client at `mcp/server.js` (see [MCP server](#mcp-server)).
 
-## Configuration
+## CLI Commands & Subcommands
 
-```bash
-node cli/weave.js mode
-node cli/weave.js mode ultra
-node cli/weave.js doctor
-node cli/weave.js gain
-node cli/weave.js gain --history
-node cli/weave.js discover
-node cli/weave.js recall <run-id>
-node cli/weave.js memory list
-node cli/weave.js memory save <name> [file]
-node cli/weave.js memory load <name>
-node cli/weave.js memory show <name>
-node cli/weave.js memory delete <name>
-```
+Weave provides a direct CLI (`weave` or `node cli/weave.js`) for inspection, configuration, and execution:
 
-`gain --history` lists every recorded run (timestamp, kind, exit code, original vs. presented bytes, redacted command) instead of just the aggregate.
-
-`discover` reads this project's local Claude Code session transcripts (`~/.claude/projects/<slug>/*.jsonl`), finds Bash commands that ran without the Weave wrapper (mode was off, or the session predates installation), and replays their recorded output through the current filters to estimate missed savings. It never prints raw commands or output — only byte counts grouped by command kind. If no transcript directory exists (Codex-only projects, CI, fresh installs) it says so and exits cleanly.
+| Command | Usage | Description |
+| --- | --- | --- |
+| `doctor` | `weave doctor [--agent=...]` | Checks Node runtime, bash executable, plugin manifests, and directory permissions |
+| `mode` | `weave mode [off\|lite\|full\|ultra]` | Shows or sets the active engineering policy mode (`.weave/mode`) |
+| `exec` | `weave exec -- <command>` | Runs a shell command through Weave's output reduction filters |
+| `gain` | `weave gain [--history]` | Displays measured output byte reduction and estimated tokens saved |
+| `recall` | `weave recall <run-id>` | Prints the raw captured output for a past run |
+| `discover` | `weave discover` | Analyzes local session transcripts for commands that ran without the wrapper |
+| `memory` | `weave memory <subcommand>` | Manages named snapshots of `.weave/state.md` under `.weave/memories/` |
 
 ### Context Snapshots (`weave memory`)
 
-`weave memory` captures and restores named snapshots of `.weave/state.md` (or a custom file) under `.weave/memories/<name>.md`. This allows switching tasks, bookmarking milestones across multi-agent handoffs (Claude Code, Codex CLI, Antigravity CLI), and restoring prior context without re-deriving it:
+`weave memory` allows saving, listing, and restoring named snapshots of `.weave/state.md` (or a custom file) under `.weave/memories/<name>.md`. This makes it easy to bookmark progress, switch between features, or restore working memory:
 
 * `weave memory save <name> [file]`: saves current `.weave/state.md` (or specified file) as `<name>`.
 * `weave memory load <name>`: restores `<name>` back into `.weave/state.md`.
 * `weave memory list`: lists all saved snapshots sorted by modification date.
 * `weave memory show <name>`: prints snapshot content to stdout without loading it.
-* `weave memory delete <name>`: removes a saved snapshot.
+* `weave memory delete <name>` (or `rm`): removes a saved snapshot.
 
 Names are strictly validated against path-traversal attacks, rejecting `..`, path separators, and symbolic links.
+
+`gain --history` lists every recorded run (timestamp, kind, exit code, original vs. presented bytes, redacted command) instead of just the aggregate.
+
+`discover` reads this project's local Claude Code session transcripts (`~/.claude/projects/<slug>/*.jsonl`), finds Bash commands that ran without the Weave wrapper (mode was off, or the session predates installation), and replays their recorded output through the current filters to estimate missed savings. It never prints raw commands or output — only byte counts grouped by command kind. If no transcript directory exists (Codex-only projects, CI, fresh installs) it says so and exits cleanly.
 
 Run commands from the target repository so modes, memory, and history remain project-local.
 
