@@ -8,6 +8,7 @@ const execCore = require('../core/exec');
 const storage = require('../core/storage');
 const modes = require('../core/mode');
 const discover = require('../core/discover');
+const memory = require('../core/memory');
 
 const PLUGIN_ROOT = path.join(__dirname, '..');
 
@@ -306,6 +307,79 @@ function cmdDoctor(argv = []) {
   process.exitCode = allOk ? 0 : 1;
 }
 
+function cmdMemory(argv) {
+  const [sub, name, ...rest] = argv;
+  const cwd = process.cwd();
+
+  if (!sub) {
+    process.stderr.write('weave memory: missing subcommand (usage: weave memory <save|load|list|show|delete> ...)\n');
+    process.exitCode = 2;
+    return;
+  }
+
+  try {
+    switch (sub) {
+      case 'save': {
+        if (!name) {
+          process.stderr.write('weave memory save: missing <name> (usage: weave memory save <name> [file])\n');
+          process.exitCode = 2;
+          return;
+        }
+        const dest = memory.saveMemory(cwd, name, rest[0]);
+        process.stdout.write(`Saved memory "${name}" -> ${dest}\n`);
+        return;
+      }
+      case 'load': {
+        if (!name) {
+          process.stderr.write('weave memory load: missing <name> (usage: weave memory load <name>)\n');
+          process.exitCode = 2;
+          return;
+        }
+        const dest = memory.loadMemory(cwd, name);
+        process.stdout.write(`Loaded memory "${name}" -> ${dest}\n`);
+        return;
+      }
+      case 'list': {
+        const items = memory.listMemories(cwd);
+        if (items.length === 0) {
+          process.stdout.write('No memories saved yet. Use "weave memory save <name>" to create one.\n');
+          return;
+        }
+        for (const item of items) {
+          process.stdout.write(`${item.modified.toISOString()}  ${String(item.size).padStart(8)}B  ${item.name}\n`);
+        }
+        return;
+      }
+      case 'show': {
+        if (!name) {
+          process.stderr.write('weave memory show: missing <name> (usage: weave memory show <name>)\n');
+          process.exitCode = 2;
+          return;
+        }
+        process.stdout.write(memory.showMemory(cwd, name));
+        return;
+      }
+      case 'delete':
+      case 'rm': {
+        if (!name) {
+          process.stderr.write(`weave memory ${sub}: missing <name> (usage: weave memory ${sub} <name>)\n`);
+          process.exitCode = 2;
+          return;
+        }
+        memory.deleteMemory(cwd, name);
+        process.stdout.write(`Deleted memory "${name}"\n`);
+        return;
+      }
+      default:
+        process.stderr.write('weave memory: expected save, load, list, show, or delete\n');
+        process.exitCode = 2;
+    }
+  } catch (e) {
+    process.stderr.write(`weave memory ${sub}: ${e.message}\n`);
+    process.exitCode = 1;
+  }
+}
+
 function main() {
   const [, , cmd, ...rest] = process.argv;
   switch (cmd) {
@@ -321,8 +395,10 @@ function main() {
       return cmdMode(rest);
     case 'doctor':
       return cmdDoctor(rest);
+    case 'memory':
+      return cmdMemory(rest);
     default:
-      process.stdout.write('Usage: weave <doctor|mode [off|lite|full|ultra]|gain|discover|recall <id>|exec -- <command>>\n');
+      process.stdout.write('Usage: weave <doctor|mode [off|lite|full|ultra]|gain|discover|recall <id>|memory <save|load|list|show|delete>|exec -- <command>>\n');
       process.exitCode = cmd ? 2 : 0;
   }
 }
