@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weave — The Engineering Layer for AI Coding Agents</title>
+  <meta name="description" content="Zero-dependency CLI and plugin for Claude Code, Codex CLI, and Antigravity. Cuts terminal noise by up to 96%, enforces YAGNI engineering discipline, and maintains cross-agent memory." />
+  <link rel="icon" type="image/svg+xml" href="mark.svg" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="site-header">
+    <div class="container nav-container">
+      <a href="#" class="brand">
+        <img src="mark.svg" alt="Weave Logo" class="brand-logo" width="32" height="32" />
+        <span class="brand-name">Weave</span>
+        <span class="version-tag">v0.5.1</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#demo">Live Demo</a>
+        <a href="#agents">AI Setup</a>
+        <a href="#commands">CLI Reference</a>
+        <a href="#benchmarks">Benchmarks</a>
+        <a href="#releases">Releases</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="https://github.com/GabrielKqw/weave" target="_blank" rel="noopener noreferrer" class="btn btn-github">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>Star on GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="container hero-container">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          <span>Zero-Dependency Engineering Layer for AI Agents</span>
+        </div>
+        <h1 class="hero-title">
+          Stop terminal explosion.<br />
+          Keep agents focused.
+        </h1>
+        <p class="hero-subtitle">
+          Weave cuts repetitive CLI output by up to <strong>96.4%</strong>, prevents redundant file reads, and synchronizes working memory across Claude Code, OpenAI Codex, and Antigravity CLI. Pure Node.js. 100% failure integrity.
+        </p>
+
+        <!-- Quick Install Tabs -->
+        <div class="install-card">
+          <div class="install-tabs">
+            <button class="install-tab-btn active" data-install="claude">Claude Code</button>
+            <button class="install-tab-btn" data-install="codex">Codex CLI</button>
+            <button class="install-tab-btn" data-install="agy">Antigravity CLI</button>
+            <button class="install-tab-btn" data-install="standalone">Standalone CLI</button>
+          </div>
+          <div class="install-body">
+            <pre><code id="install-snippet">claude plugin marketplace add GabrielKqw/weave --scope user&#10;claude plugin install weave@weave --scope user</code></pre>
+            <button class="btn-copy" id="copy-install-btn" title="Copy to clipboard">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span class="copy-label">Copy</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Metric Badges -->
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="metric-value">0</span>
+            <span class="metric-label">Runtime Dependencies</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-value">96.4%</span>
+            <span class="metric-label">Output Reduction on Tests</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-value">100%</span>
+            <span class="metric-label">Error & Failure Integrity</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-value">128/128</span>
+            <span class="metric-label">Verified Test Suite Passing</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Terminal Demo Section -->
+    <section id="demo" class="section demo-section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">See it in action</div>
+          <h2 class="section-title">Terminal Intelligence in Real Time</h2>
+          <p class="section-description">
+            Inspect how Weave processes a test suite run. It compresses passing noise, but preserves 100% of stack traces when errors occur.
+          </p>
+        </div>
+
+        <div class="terminal-showcase">
+          <div class="terminal-toolbar">
+            <div class="terminal-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="terminal-modes">
+              <button class="terminal-toggle active" data-scenario="weave-success">With Weave (Passing)</button>
+              <button class="terminal-toggle" data-scenario="raw-success">Raw Output (Noisy)</button>
+              <button class="terminal-toggle" data-scenario="weave-failure">With Weave (On Failure)</button>
+            </div>
+            <div class="terminal-title">bash — 80x24</div>
+          </div>
+
+          <div class="terminal-viewport">
+            <!-- Screen 1: With Weave Passing -->
+            <div class="terminal-screen active" id="screen-weave-success">
+              <div class="term-line"><span class="term-prompt">$</span> <span class="term-cmd">node cli/weave.js exec -- npm test</span></div>
+              <div class="term-line term-dim">Executing: npm test</div>
+              <div class="term-line"><span class="term-key">Command:</span> npm test</div>
+              <div class="term-line"><span class="term-key">Exit:</span> <span class="term-success">0</span></div>
+              <div class="term-line"><span class="term-key">Summary:</span> test suite passed (34 tests passed, 0 failures, 12 suites)</div>
+              <div class="term-line"><span class="term-key">Failures:</span> none</div>
+              <div class="term-line"><span class="term-key">Omitted:</span> <span class="term-highlight">284 line(s)</span> (95.8% output reduced)</div>
+              <div class="term-line"><span class="term-key">Recovery:</span> weave recall 4f12ab90cd34</div>
+              <div class="term-line term-success-banner">✔ Clean summary delivered to AI agent (~1,850 tokens saved).</div>
+            </div>
+
+            <!-- Screen 2: Raw Output -->
+            <div class="terminal-screen" id="screen-raw-success">
+              <div class="term-line"><span class="term-prompt">$</span> <span class="term-cmd">npm test</span></div>
+              <div class="term-line term-dim">> test-suite@1.0.0 test</div>
+              <div class="term-line term-dim">> node --test tests/*.test.js</div>
+              <div class="term-line">✔ auth.test.js > should validate token (1.42ms)</div>
+              <div class="term-line">✔ auth.test.js > should handle refresh cycle (0.91ms)</div>
+              <div class="term-line">✔ user.test.js > should fetch user profile (2.11ms)</div>
+              <div class="term-line">✔ user.test.js > should enforce role permissions (0.84ms)</div>
+              <div class="term-line term-dim">[... 280 lines of repetitive progress bars, ANSI codes, and timing noise ...]</div>
+              <div class="term-line">✔ payment.test.js > should calculate tax bracket (1.10ms)</div>
+              <div class="term-line">ℹ tests 34 | pass 34 | fail 0 | cancelled 0 | duration 214ms</div>
+              <div class="term-line term-danger-banner">✖ 290 lines ingested into AI context window unnecessarily.</div>
+            </div>
+
+            <!-- Screen 3: Weave on Failure -->
+            <div class="terminal-screen" id="screen-weave-failure">
+              <div class="term-line"><span class="term-prompt">$</span> <span class="term-cmd">node cli/weave.js exec -- npm test</span></div>
+              <div class="term-line"><span class="term-key">Command:</span> npm test</div>
+              <div class="term-line"><span class="term-key">Exit:</span> <span class="term-danger">1</span></div>
+              <div class="term-line term-danger">✖ AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:</div>
+              <div class="term-line term-danger">+ actual: 403</div>
+              <div class="term-line term-danger">- expected: 200</div>
+              <div class="term-line term-dim">    at TestContext.&lt;anonymous&gt; (tests/api.test.js:42:12)</div>
+              <div class="term-line term-dim">    at Test.run (node:internal/test_runner/test:884:25)</div>
+              <div class="term-line term-key">Summary: 1 failure recorded. Complete stderr & stack trace preserved verbatim.</div>
+              <div class="term-line term-success-banner">✔ 100% Failure Integrity: Errors and diagnostics are never omitted.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 Pillars Section -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Architecture</div>
+          <h2 class="section-title">Built for Engineering Discipline</h2>
+          <p class="section-description">
+            Weave is not just an output filter. It provides a complete policy and memory layer for multi-agent workflows.
+          </p>
+        </div>
+
+        <div class="cards-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+            </div>
+            <h3 class="feature-title">Terminal Intelligence</h3>
+            <p class="feature-desc">
+              Domain-specific filters for Git, Test Runners (Jest, Vitest, Node test, Pytest, Cargo, Go), Search (grep/rg), and Linters. Compresses passing noise, caps streams at 20MB.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            </div>
+            <h3 class="feature-title">Failure Integrity</h3>
+            <p class="feature-desc">
+              Non-zero exit codes always pass through 100% unreduced. Stack traces, assertion diffs, and error diagnostics are guaranteed to reach the AI model intact.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            </div>
+            <h3 class="feature-title">Preread Ledger</h3>
+            <p class="feature-desc">
+              Tracks file reads and searches in <code>.weave/ledger.json</code>. If an agent repeatedly reads the same unchanged file, Weave warns it to use working memory instead.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            </div>
+            <h3 class="feature-title">Cross-Agent Memory</h3>
+            <p class="feature-desc">
+              Freeze task context and architecture state with <code>weave memory save &lt;name&gt;</code>. Other agents or future sessions restore it instantly without burning chat tokens.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Setup Guides -->
+    <section id="agents" class="section section-dark">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Integration</div>
+          <h2 class="section-title">Connect to Any AI Coding Assistant</h2>
+          <p class="section-description">
+            Choose your tool of choice and get set up in under 60 seconds.
+          </p>
+        </div>
+
+        <div class="agent-tabs">
+          <button class="agent-tab-btn active" data-agent="claude-guide">Claude Code</button>
+          <button class="agent-tab-btn" data-agent="codex-guide">OpenAI Codex CLI</button>
+          <button class="agent-tab-btn" data-agent="agy-guide">Antigravity CLI</button>
+          <button class="agent-tab-btn" data-agent="rules-guide">Cursor / Cline / Windsurf</button>
+        </div>
+
+        <div class="agent-guide-card" id="claude-guide">
+          <h3>Claude Code Integration</h3>
+          <p>Installs as a native Claude Code plugin with automatic shell interception hooks and shared skills:</p>
+          <div class="code-box">
+            <pre><code># 1. Add marketplace repository
+claude plugin marketplace add GabrielKqw/weave --scope user
+
+# 2. Install Weave plugin
+claude plugin install weave@weave --scope user
+
+# 3. Inside Claude Code session, set active mode:
+/weave full</code></pre>
+            <button class="btn-copy-box" data-copy="claude plugin marketplace add GabrielKqw/weave --scope user&#10;claude plugin install weave@weave --scope user">Copy</button>
+          </div>
+        </div>
+
+        <div class="agent-guide-card hidden" id="codex-guide">
+          <h3>OpenAI Codex CLI Integration</h3>
+          <p>Installs via Codex plugin manifest with engineering policy mode injection and shared skills:</p>
+          <div class="code-box">
+            <pre><code># 1. Add marketplace repository
+codex plugin marketplace add GabrielKqw/weave
+
+# 2. Install Weave plugin
+codex plugin add weave@weave
+
+# 3. Check installed status
+codex plugin list</code></pre>
+            <button class="btn-copy-box" data-copy="codex plugin marketplace add GabrielKqw/weave&#10;codex plugin add weave@weave">Copy</button>
+          </div>
+        </div>
+
+        <div class="agent-guide-card hidden" id="agy-guide">
+          <h3>Google Antigravity CLI (agy) Integration</h3>
+          <p>Integrates via native plugin install or shared skills and <code>GEMINI.md</code> policy:</p>
+          <div class="code-box">
+            <pre><code># 1. Clone repository
+git clone https://github.com/GabrielKqw/weave.git
+
+# 2. Install into agy environment
+agy plugin install ./weave
+
+# 3. Verify health
+node ./weave/cli/weave.js doctor</code></pre>
+            <button class="btn-copy-box" data-copy="git clone https://github.com/GabrielKqw/weave.git&#10;agy plugin install ./weave">Copy</button>
+          </div>
+        </div>
+
+        <div class="agent-guide-card hidden" id="rules-guide">
+          <h3>Rule-File Agents (Cursor, Cline, Windsurf)</h3>
+          <p>Use pre-generated rules that inject Weave's engineering policy into file-reading agents:</p>
+          <div class="code-box">
+            <pre><code># Generate synchronized rule files for all editors:
+node scripts/generate-agent-rules.js
+
+# Generates:
+# - AGENTS.md (for any agent)
+# - .cursor/rules/weave.mdc (Cursor)
+# - .clinerules/weave.md (Cline)
+# - .windsurf/rules/weave.md (Windsurf)</code></pre>
+            <button class="btn-copy-box" data-copy="node scripts/generate-agent-rules.js">Copy</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLI Command Cheatsheet -->
+    <section id="commands" class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">CLI Reference</div>
+          <h2 class="section-title">Complete Command Reference</h2>
+          <p class="section-description">
+            All commands available via <code>weave &lt;command&gt;</code> or <code>node cli/weave.js &lt;command&gt;</code>.
+          </p>
+        </div>
+
+        <div class="command-grid">
+          <div class="cmd-card">
+            <div class="cmd-header">
+              <span class="cmd-name">weave doctor</span>
+              <span class="cmd-badge">Diagnostic</span>
+            </div>
+            <p class="cmd-desc">Verifies Node.js version (&gt;=18), bash path, plugin manifests, and directory permissions.</p>
+            <div class="cmd-syntax">weave doctor [--agent=claude|codex|agy]</div>
+          </div>
+
+          <div class="cmd-card">
+            <div class="cmd-header">
+              <span class="cmd-name">weave exec</span>
+              <span class="cmd-badge">Core</span>
+            </div>
+            <p class="cmd-desc">Executes a shell command through Weave's output reduction filters with 100% failure integrity.</p>
+            <div class="cmd-syntax">weave exec -- &lt;command&gt;</div>
+          </div>
+
+          <div class="cmd-card">
+            <div class="cmd-header">
+              <span class="cmd-name">weave memory</span>
+              <span class="cmd-badge">Context</span>
+            </div>
+            <p class="cmd-desc">Saves, restores, lists, and manages named snapshots of <code>.weave/state.md</code>.</p>
+            <div class="cmd-syntax">weave memory &lt;save|load|list|show|delete&gt; [name]</div>
+          </div>
+
+          <div class="cmd-card">
+            <div class="cmd-header">
+              <span class="cmd-name">weave gain</span>
+              <span class="cmd-badge">Metrics</span>
+            </div>
+            <p class="cmd-desc">Reports total byte reduction and estimated tokens saved across all recorded runs.</p>
+            <div class="cmd-syntax">weave gain [--history]</div>
+          </div>
+
+          <div class="cmd-card">
+            <div class="cmd-header">
+              <span class="cmd-name">weave recall</span>
+              <span class="cmd-badge">Audit</span>
+            </div>
+            <p class="cmd-desc">Prints the complete raw captured output for any omitted run by its 12-character run ID.</p>
+            <div class="cmd-syntax">weave recall &lt;run-id&gt;</div>
+          </div>
+
+          <div class="cmd-card">
+            <div class="cmd-header">
+              <span class="cmd-name">weave mode</span>
+              <span class="cmd-badge">Policy</span>
+            </div>
+            <p class="cmd-desc">Switches active engineering policy: <code>off</code>, <code>lite</code>, <code>full</code>, or <code>ultra</code>.</p>
+            <div class="cmd-syntax">weave mode [off|lite|full|ultra]</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reproducible Benchmarks -->
+    <section id="benchmarks" class="section section-dark">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Verified Data</div>
+          <h2 class="section-title">Reproducible Output Benchmarks</h2>
+          <p class="section-description">
+            Run <code>npm run benchmark</code> locally to verify these exact numbers on your own machine.
+          </p>
+        </div>
+
+        <div class="benchmark-table-wrapper">
+          <table class="benchmark-table">
+            <thead>
+              <tr>
+                <th>Scenario</th>
+                <th>Original</th>
+                <th>Presented</th>
+                <th>Reduction</th>
+                <th>Integrity Guarantee</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Passing Test Suite (300 lines)</strong></td>
+                <td>6,465 B</td>
+                <td>232 B</td>
+                <td><span class="reduction-pill high">96.4%</span></td>
+                <td>Final summary &amp; count preserved</td>
+              </tr>
+              <tr>
+                <td><strong>Git Status (30 untracked files)</strong></td>
+                <td>555 B</td>
+                <td>429 B</td>
+                <td><span class="reduction-pill">22.7%</span></td>
+                <td>Section counts &amp; changes preserved</td>
+              </tr>
+              <tr>
+                <td><strong>Failing Assertion (Exit 1)</strong></td>
+                <td>60 B</td>
+                <td>60 B</td>
+                <td><span class="reduction-pill zero">0%</span></td>
+                <td><strong>100% untouched</strong> (Stack trace &amp; error intact)</td>
+              </tr>
+              <tr>
+                <td><strong>Code Search (50 grep matches)</strong></td>
+                <td>2,031 B</td>
+                <td>1,846 B</td>
+                <td><span class="reduction-pill">9.1%</span></td>
+                <td>Grouped by file, repetitive paths stripped</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Releases / Changelog Section -->
+    <section id="releases" class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Updates &amp; Releases</div>
+          <h2 class="section-title">Changelog &amp; Release History</h2>
+          <p class="section-description">
+            Track new features, bug fixes, and improvements across every Weave release.
+          </p>
+        </div>
+
+        <div class="releases-timeline">
+          <!-- Release 0.5.1 -->
+          <div class="release-entry">
+            <div class="release-badge">
+              <span class="release-ver">v0.5.1</span>
+              <span class="release-tag latest">Latest Release</span>
+            </div>
+            <div class="release-content">
+              <h3 class="release-title">Context Snapshots, Secret Redaction &amp; Hook Hardening</h3>
+              <ul class="release-list">
+                <li><strong>Added <code>weave memory</code> CLI:</strong> Full context snapshot management (<code>save</code>, <code>load</code>, <code>list</code>, <code>show</code>, <code>delete</code>) with symlink and path traversal protection.</li>
+                <li><strong>Hardened Secret Redaction:</strong> Added regex scrubbing for bare JSON Web Tokens (JWT) starting with <code>eyJ</code> without requiring a Bearer prefix.</li>
+                <li><strong>BOM Header Handling:</strong> Fixed hooks silently failing on BOM-prefixed JSON stdin on Windows environments.</li>
+                <li><strong>Test Suite Expansion:</strong> 128 passing unit and integration tests across Linux and Windows runners.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Release 0.5.0 -->
+          <div class="release-entry">
+            <div class="release-badge">
+              <span class="release-ver">v0.5.0</span>
+            </div>
+            <div class="release-content">
+              <h3 class="release-title">Initial Triad Architecture Launch</h3>
+              <ul class="release-list">
+                <li>Unified multi-agent support for Claude Code, OpenAI Codex CLI, and Antigravity CLI.</li>
+                <li>Domain-specific output compression profiles for Git, Test Runners, Search, and Linters.</li>
+                <li>Lightweight request contract and working memory structure at <code>.weave/state.md</code>.</li>
+                <li>Zero-dependency stdio JSON-RPC MCP server in <code>mcp/server.js</code>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-left">
+        <div class="footer-brand">
+          <img src="mark.svg" alt="Weave" width="24" height="24" />
+          <span>Weave</span>
+        </div>
+        <p class="footer-desc">Minimal workflow, terminal intelligence, and context continuity for AI coding agents.</p>
+        <p class="footer-copy">Created by <strong>Gabriel Costa</strong>.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Project</h4>
+          <a href="https://github.com/GabrielKqw/weave" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+          <a href="https://github.com/GabrielKqw/weave/issues" target="_blank" rel="noopener noreferrer">Issue Tracker</a>
+          <a href="https://github.com/GabrielKqw/weave/blob/main/README.md" target="_blank" rel="noopener noreferrer">Documentation</a>
+        </div>
+        <div class="footer-col">
+          <h4>Connect</h4>
+          <a href="https://www.linkedin.com/in/gabriel-costa-940b89276/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          <a href="https://github.com/GabrielKqw" target="_blank" rel="noopener noreferrer">GitHub Profile</a>
+          <span>Discord: <code>tanjas1</code></span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
