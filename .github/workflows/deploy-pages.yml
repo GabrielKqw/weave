@@ -9,7 +9,10 @@ on:
       - '.github/workflows/deploy-pages.yml'
       - 'package.json'
       - 'CHANGELOG.md'
+      - 'README.md'
+      - 'README.pt-BR.md'
   workflow_dispatch:
+
 
 permissions:
   contents: read
