@@ -3,6 +3,11 @@
 
 const path = require('path');
 
+function hasCodexEnv() {
+  if (process.env.OPENAI_CLI_MODEL) return true;
+  return Object.keys(process.env).some((key) => key.startsWith('CODEX_'));
+}
+
 function readStdin() {
   try {
     return require('fs').readFileSync(0, 'utf8').replace(/^\uFEFF/, '');
@@ -22,11 +27,7 @@ function main() {
     return;
   }
 
-  if (
-    process.env.CODEX_SESSION_ID ||
-    process.env.CODEX_THREAD_ID ||
-    process.env.ANTIGRAVITY_SESSION_ID
-  ) {
+  if (hasCodexEnv() || process.env.ANTIGRAVITY_SESSION_ID) {
     return;
   }
   if (input.toolCall?.name === 'run_command' || input.tool_name === 'run_command') return;
