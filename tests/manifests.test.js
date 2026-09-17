@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
 
@@ -72,3 +73,15 @@ test('every bundled skill has matching frontmatter', () => {
     assert.match(frontmatter, /description:/);
   }
 });
+
+test('weave doctor --agent=antigravity reports bash as warn/optional instead of fail', () => {
+  const cliPath = path.join(ROOT, 'cli', 'weave.js');
+  const result = spawnSync(process.execPath, [cliPath, 'doctor', '--agent=antigravity'], {
+    encoding: 'utf8',
+    env: { ...process.env, WEAVE_BASH: 'nonexistent-bash-binary-test' },
+  });
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /WARN\s+bash executable \(optional for antigravity\)/);
+  assert.doesNotMatch(result.stdout, /FAIL\s+bash executable/);
+});
+

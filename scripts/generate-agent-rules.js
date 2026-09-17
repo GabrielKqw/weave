@@ -12,6 +12,7 @@ const FOOTER = '\nSwitch modes only from Claude Code/Codex, where Weave is wired
 
 const TARGETS = [
   { file: 'AGENTS.md', content: HEADER + BODY + '\n' + FOOTER },
+  { file: 'GEMINI.md', content: HEADER + BODY + '\n' + FOOTER },
   { file: '.clinerules/weave.md', content: HEADER + BODY + '\n' + FOOTER },
   { file: '.windsurf/rules/weave.md', content: HEADER + BODY + '\n' + FOOTER },
   {

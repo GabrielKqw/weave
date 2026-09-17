@@ -166,8 +166,27 @@ function checkJson(label, filePath, results) {
   }
 }
 
-function cmdDoctor() {
+function detectAgent(argv = []) {
+  for (const arg of argv) {
+    if (arg.startsWith('--agent=')) return arg.slice(8).toLowerCase();
+    if (arg === 'antigravity' || arg === 'codex' || arg === 'claude') return arg;
+  }
+  if (process.env.ANTIGRAVITY_SESSION_ID) return 'antigravity';
+  if (process.env.CODEX_SESSION_ID || process.env.CODEX_THREAD_ID) return 'codex';
+  if (process.env.WEAVE_AGENT) return process.env.WEAVE_AGENT.toLowerCase();
+  return null;
+}
+
+function cmdDoctor(argv = []) {
   const results = [];
+  const agent = detectAgent(argv);
+  if (agent) {
+    results.push({
+      ok: true,
+      label: 'detected agent',
+      detail: agent,
+    });
+  }
 
   const requiredNodeMajor = Number((require('../package.json').engines.node.match(/\d+/) || [])[0]);
   const actualNodeMajor = Number(process.version.slice(1).split('.')[0]);
@@ -180,19 +199,49 @@ function cmdDoctor() {
       : `${process.version} is below the required >=${requiredNodeMajor} - install a newer Node.js from nodejs.org`,
   });
 
+  const isNonBashAgent = agent === 'antigravity' || agent === 'codex';
   const bashPath = execCore.bashExecutable();
   const bashCheck = spawnSync(bashPath, ['-c', 'exit 0'], { windowsHide: true });
-  results.push({
-    ok: !bashCheck.error && bashCheck.status === 0,
-    label: 'bash executable',
-    detail: bashCheck.error
-      ? `${bashCheck.error.message} - install Git Bash (Windows) or ensure "bash" is on PATH`
-      : bashPath,
-  });
+  const bashOk = !bashCheck.error && bashCheck.status === 0;
+
+  if (bashOk) {
+    results.push({
+      ok: true,
+      label: 'bash executable',
+      detail: bashPath,
+    });
+  } else if (isNonBashAgent) {
+    results.push({
+      ok: true,
+      warn: true,
+      label: `bash executable (optional for ${agent})`,
+      detail: bashCheck.error
+        ? `${bashCheck.error.message} - not required when running in ${agent}`
+        : `${bashPath} (exit ${bashCheck.status}) - not required when running in ${agent}`,
+    });
+  } else {
+    results.push({
+      ok: false,
+      label: 'bash executable',
+      detail: bashCheck.error
+        ? `${bashCheck.error.message} - install Git Bash (Windows) or ensure "bash" is on PATH`
+        : bashPath,
+    });
+  }
 
   checkJson('.claude-plugin/plugin.json', path.join(PLUGIN_ROOT, '.claude-plugin', 'plugin.json'), results);
   checkJson('.claude-plugin/marketplace.json', path.join(PLUGIN_ROOT, '.claude-plugin', 'marketplace.json'), results);
   checkJson('.codex-plugin/plugin.json', path.join(PLUGIN_ROOT, '.codex-plugin', 'plugin.json'), results);
+  checkJson('.agents/plugins/marketplace.json', path.join(PLUGIN_ROOT, '.agents', 'plugins', 'marketplace.json'), results);
+
+  const geminiPath = path.join(PLUGIN_ROOT, 'GEMINI.md');
+  const geminiOk = fs.existsSync(geminiPath);
+  results.push({
+    ok: geminiOk,
+    label: 'GEMINI.md present (Antigravity)',
+    detail: geminiOk ? geminiPath : `missing: ${geminiPath} - run node scripts/generate-agent-rules.js`,
+  });
+
   const hooksJson = checkJson('hooks/hooks.json', path.join(PLUGIN_ROOT, 'hooks', 'hooks.json'), results);
 
   const hookScriptPath = path.join(PLUGIN_ROOT, 'hooks', 'pretooluse.js');
@@ -245,7 +294,8 @@ function cmdDoctor() {
 
   let allOk = true;
   for (const r of results) {
-    process.stdout.write(`${r.ok ? 'OK  ' : 'FAIL'}  ${r.label} - ${r.detail}\n`);
+    const status = r.warn ? 'WARN' : (r.ok ? 'OK  ' : 'FAIL');
+    process.stdout.write(`${status}  ${r.label} - ${r.detail}\n`);
     if (!r.ok) allOk = false;
   }
   process.exitCode = allOk ? 0 : 1;

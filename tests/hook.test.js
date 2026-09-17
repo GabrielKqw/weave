@@ -13,6 +13,7 @@ function runHook(inputObj, env = {}) {
   const cleanEnv = { ...process.env };
   delete cleanEnv.CODEX_SESSION_ID;
   delete cleanEnv.CODEX_THREAD_ID;
+  delete cleanEnv.ANTIGRAVITY_SESSION_ID;
   return spawnSync('node', [HOOK_PATH], { input, encoding: 'utf8', env: { ...cleanEnv, ...env } });
 }
 
