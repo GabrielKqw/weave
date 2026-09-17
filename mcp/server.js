@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-// stdio transport is newline-delimited JSON-RPC, not LSP-style Content-Length framing.
 const readline = require('readline');
 const modes = require('../core/mode');
 const storage = require('../core/storage');
@@ -75,7 +74,7 @@ function handle(msg) {
   if (method === 'initialize') {
     return respond(id, { protocolVersion: '2024-11-05', capabilities: { tools: {} }, serverInfo: SERVER_INFO });
   }
-  if (method === 'notifications/initialized') return; // no response for notifications
+  if (method === 'notifications/initialized') return;
   if (method === 'tools/list') return respond(id, { tools: TOOLS });
   if (method === 'tools/call') {
     try {

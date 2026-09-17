@@ -47,9 +47,6 @@ test('.agents/plugins/marketplace.json is valid and points at the local plugin r
 });
 
 test('hooks/hooks.json declares a PreToolUse Bash matcher pointing at the real hook file', () => {
-  // The command is a single interpolated string ("node \"${CLAUDE_PLUGIN_ROOT}/hooks/x.js\""),
-  // not a separate command+args pair - Codex CLI only substitutes ${CLAUDE_PLUGIN_ROOT} inside
-  // the "command" string, not inside "args" array entries, so a split form silently fails there.
   const hooks = readJson('hooks/hooks.json');
   const entry = hooks.hooks.PreToolUse.find((e) => String(e.matcher).includes('Bash'));
   assert.ok(entry, 'expected a Bash matcher under PreToolUse');

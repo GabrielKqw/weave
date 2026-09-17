@@ -6,8 +6,6 @@ const path = require('path');
 
 const MAX_ENTRIES = 200;
 const MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
-// Fifteen minutes catches accidental repeated searches without treating an
-// intentional later refresh as stale work.
 const REPEATED_SEARCH_WINDOW_MS = 15 * 60 * 1000;
 
 function ledgerPath(cwd) {
