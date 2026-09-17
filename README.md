@@ -4,7 +4,7 @@
 
 Minimal engineering policy, terminal intelligence, context continuity, and verification in one dependency-free plugin.
 
-**Claude Code x Codex CLI**
+**Claude Code · Codex CLI · Antigravity CLI**
 
 [Why Weave?](#why-weave) | [See it in action](#see-weave-in-action) | [Architecture](#architecture) | [Benchmarks](#benchmarks) | [Installation](#installation)
 
@@ -175,6 +175,7 @@ Run `node cli/weave.js gain` inside a project to measure its retained Weave hist
 | --- | --- |
 | Claude Code | Shared skills, lifecycle events, and automatic shell interception |
 | Codex CLI | Shared skills and lifecycle policy (mode injection) via the plugin manifest. Automatic shell interception is not currently supported in Codex CLI |
+| Antigravity CLI (`agy`) | Shared skills and policy via `AGENTS.md`/`GEMINI.md`. Automatic shell interception is not currently supported in Antigravity CLI |
 | Other agents | The CLI can be called directly; automatic host integration is not claimed |
 
 Unsupported hook events fail open, so the original tool call proceeds unchanged.
@@ -255,6 +256,12 @@ Refresh the managed Git marketplace checkout with:
 
 ```bash
 codex plugin marketplace upgrade weave
+```
+
+### Antigravity CLI
+
+```bash
+agy plugin install <path>
 ```
 
 ### Local development
