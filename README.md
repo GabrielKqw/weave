@@ -74,6 +74,7 @@ flowchart TD
 | Failure integrity | Preserves non-zero exits, stdout, stderr, and diagnostic lines |
 | Recovery | Stores redacted complete captures under `.weave/runs/` |
 | Context continuity | Guides Claude Code and Codex CLI to keep a compact `.weave/state.md` handoff |
+| Context snapshots | `weave memory` saves, loads, lists, and inspects named memory snapshots |
 | Focused operations | Provides review, repository audit, debt, gain, and help skills |
 | Multi-agent rule files | Generates the same policy text for Cursor, Cline, Windsurf, and any `AGENTS.md`-reading agent |
 | MCP server | Serves policy, gain, and discover over stdio JSON-RPC for MCP-capable clients without a native plugin integration |
@@ -101,7 +102,7 @@ flowchart LR
 .codex-plugin/        Codex manifest
 .agents/plugins/      Codex marketplace metadata
 cli/weave.js          CLI
-core/                 execution, modes, filters, redaction, quoting, storage, discover
+core/                 execution, modes, filters, redaction, quoting, storage, discover, memory
 hooks/                lifecycle and shell interception adapters
 skills/               shared workflow and focused operations
 mcp/server.js         dependency-free MCP server (stdio) for non-plugin clients
@@ -111,7 +112,7 @@ docs/benchmark.svg    generated chart of the benchmark table below (not hand-edi
 tests/                dependency-free Node.js test suite
 ```
 
-Hook adapters stay thin. Classification and reduction live in `core/filters.js`; execution and report integrity live in `core/exec.js`; persistence and retention live in `core/storage.js`.
+Hook adapters stay thin. Classification and reduction live in `core/filters.js`; execution and report integrity live in `core/exec.js`; persistence and retention live in `core/storage.js`; named context snapshots live in `core/memory.js`.
 
 ## Modes
 
@@ -300,19 +301,37 @@ node cli/weave.js gain
 node cli/weave.js gain --history
 node cli/weave.js discover
 node cli/weave.js recall <run-id>
+node cli/weave.js memory list
+node cli/weave.js memory save <name> [file]
+node cli/weave.js memory load <name>
+node cli/weave.js memory show <name>
+node cli/weave.js memory delete <name>
 ```
 
 `gain --history` lists every recorded run (timestamp, kind, exit code, original vs. presented bytes, redacted command) instead of just the aggregate.
 
 `discover` reads this project's local Claude Code session transcripts (`~/.claude/projects/<slug>/*.jsonl`), finds Bash commands that ran without the Weave wrapper (mode was off, or the session predates installation), and replays their recorded output through the current filters to estimate missed savings. It never prints raw commands or output — only byte counts grouped by command kind. If no transcript directory exists (Codex-only projects, CI, fresh installs) it says so and exits cleanly.
 
-Run commands from the target repository so modes and history remain project-local.
+### Context Snapshots (`weave memory`)
+
+`weave memory` captures and restores named snapshots of `.weave/state.md` (or a custom file) under `.weave/memories/<name>.md`. This allows switching tasks, bookmarking milestones across multi-agent handoffs (Claude Code, Codex CLI, Antigravity CLI), and restoring prior context without re-deriving it:
+
+* `weave memory save <name> [file]`: saves current `.weave/state.md` (or specified file) as `<name>`.
+* `weave memory load <name>`: restores `<name>` back into `.weave/state.md`.
+* `weave memory list`: lists all saved snapshots sorted by modification date.
+* `weave memory show <name>`: prints snapshot content to stdout without loading it.
+* `weave memory delete <name>`: removes a saved snapshot.
+
+Names are strictly validated against path-traversal attacks, rejecting `..`, path separators, and symbolic links.
+
+Run commands from the target repository so modes, memory, and history remain project-local.
 
 Weave writes only:
 
 ```text
 .weave/mode
 .weave/state.md
+.weave/memories/<name>.md
 .weave/runs/<id>.json
 .weave/runs/<id>.raw.txt
 ```
