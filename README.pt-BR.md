@@ -74,6 +74,7 @@ flowchart TD
 | Integridade de falha | Preserva saídas não-zero, stdout, stderr e linhas de diagnóstico |
 | Recuperação | Guarda capturas completas redigidas em `.weave/runs/` |
 | Continuidade de contexto | Orienta Claude Code e Codex CLI a manter um handoff compacto em `.weave/state.md` |
+| Snapshots de contexto | `weave memory` salva, restaura, lista e inspeciona snapshots de memória nomeados |
 | Operações focadas | Fornece skills de review, auditoria de repositório, débito, ganho e ajuda |
 | Arquivos de regra multi-agente | Gera o mesmo texto de política pro Cursor, Cline, Windsurf, e qualquer agente que leia `AGENTS.md` |
 | Servidor MCP | Serve `get_policy`, `gain` e `discover` via stdio JSON-RPC pra clientes com capacidade MCP sem integração nativa de plugin |
@@ -101,7 +102,7 @@ flowchart LR
 .codex-plugin/        Manifesto do Codex
 .agents/plugins/      Metadados de marketplace do Codex
 cli/weave.js          CLI
-core/                 execução, modos, filtros, redação, quoting, storage, discover
+core/                 execução, modos, filtros, redação, quoting, storage, discover, memory
 hooks/                adaptadores de lifecycle e interceptação de shell
 skills/               workflow compartilhado e operações focadas
 mcp/server.js         servidor MCP sem dependências (stdio) para clientes sem plugin
@@ -111,7 +112,7 @@ docs/benchmark.svg    gráfico gerado da tabela de benchmark abaixo (não editad
 tests/                suíte de testes Node.js sem dependências
 ```
 
-Os adaptadores de hook ficam enxutos. Classificação e redução vivem em `core/filters.js`; execução e integridade do relatório vivem em `core/exec.js`; persistência e retenção vivem em `core/storage.js`.
+Os adaptadores de hook ficam enxutos. Classificação e redução vivem em `core/filters.js`; execução e integridade do relatório vivem em `core/exec.js`; persistência e retenção vivem em `core/storage.js`; snapshots nomeados de contexto vivem em `core/memory.js`.
 
 ## Modos
 
@@ -300,19 +301,37 @@ node cli/weave.js gain
 node cli/weave.js gain --history
 node cli/weave.js discover
 node cli/weave.js recall <run-id>
+node cli/weave.js memory list
+node cli/weave.js memory save <nome> [arquivo]
+node cli/weave.js memory load <nome>
+node cli/weave.js memory show <nome>
+node cli/weave.js memory delete <nome>
 ```
 
 `gain --history` lista todo run registrado (timestamp, tipo, código de saída, bytes originais vs. apresentados, comando redigido) em vez de só o agregado.
 
 `discover` lê as transcrições de sessão locais do Claude Code deste projeto (`~/.claude/projects/<slug>/*.jsonl`), encontra comandos Bash que rodaram sem o wrapper do Weave (modo estava `off`, ou a sessão é anterior à instalação), e reproduz a saída registrada através dos filtros atuais para estimar a economia perdida. Nunca imprime comandos ou saída brutos — só contagens de bytes agrupadas por tipo de comando. Se não existir diretório de transcrições (projetos só-Codex, CI, instalações novas), ele diz isso e encerra normalmente.
 
-Rode os comandos a partir do repositório alvo para que modos e histórico permaneçam locais ao projeto.
+### Snapshots de Contexto (`weave memory`)
+
+O `weave memory` captura e restaura snapshots nomeados de `.weave/state.md` (ou de um arquivo customizado) dentro de `.weave/memories/<nome>.md`. Isso permite alternar entre tarefas, marcar pontos de checagem entre diferentes agentes (Claude Code, Codex CLI, Antigravity CLI) e restaurar o contexto anterior sem precisar redescobri-lo:
+
+* `weave memory save <nome> [arquivo]`: salva o `.weave/state.md` atual (ou o arquivo informado) como `<nome>`.
+* `weave memory load <nome>`: restaura `<nome>` de volta para `.weave/state.md`.
+* `weave memory list`: lista todos os snapshots salvos ordenados por data de modificação.
+* `weave memory show <nome>`: imprime o conteúdo do snapshot no stdout sem precisar carregá-lo.
+* `weave memory delete <nome>`: exclui um snapshot salvo.
+
+Os nomes são validados contra ataques de *path-traversal*, rejeitando `..`, separadores de caminho e links simbólicos.
+
+Rode os comandos a partir do repositório alvo para que modos, memória e histórico permaneçam locais ao projeto.
 
 O Weave escreve apenas:
 
 ```text
 .weave/mode
 .weave/state.md
+.weave/memories/<nome>.md
 .weave/runs/<id>.json
 .weave/runs/<id>.raw.txt
 ```
