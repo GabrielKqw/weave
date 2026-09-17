@@ -261,9 +261,15 @@ codex plugin marketplace upgrade weave
 
 ### Antigravity CLI
 
+Instale a partir de um clone local do repositório:
+
 ```bash
-agy plugin install <caminho>
+git clone https://github.com/GabrielKqw/weave.git
+cd weave
+agy plugin install ./
 ```
+
+Alternativamente, copie ou vincule o repositório em `~/.gemini/config/plugins/weave` ou `.agents/plugins/weave`. O Antigravity CLI carrega as skills e as regras do projeto (`GEMINI.md`/`AGENTS.md`) automaticamente.
 
 ### Desenvolvimento local
 
@@ -291,38 +297,35 @@ weave doctor
 
 Depois, chame `weave exec -- <comando>` você mesmo, ou aponte um cliente MCP para `mcp/server.js` (veja [Servidor MCP](#servidor-mcp)).
 
-## Configuração
+## Comandos da CLI e Subcomandos
 
-```bash
-node cli/weave.js mode
-node cli/weave.js mode ultra
-node cli/weave.js doctor
-node cli/weave.js gain
-node cli/weave.js gain --history
-node cli/weave.js discover
-node cli/weave.js recall <run-id>
-node cli/weave.js memory list
-node cli/weave.js memory save <nome> [arquivo]
-node cli/weave.js memory load <nome>
-node cli/weave.js memory show <nome>
-node cli/weave.js memory delete <nome>
-```
+O Weave inclui uma CLI direta (`weave` ou `node cli/weave.js`) para diagnóstico, configuração e execução:
+
+| Comando | Uso | Descrição |
+| --- | --- | --- |
+| `doctor` | `weave doctor [--agent=...]` | Verifica ambiente Node, executável bash, manifestos de plugin e permissões |
+| `mode` | `weave mode [off\|lite\|full\|ultra]` | Exibe ou define a política ativa de engenharia (`.weave/mode`) |
+| `exec` | `weave exec -- <comando>` | Executa um comando no shell aplicando os filtros de redução do Weave |
+| `gain` | `weave gain [--history]` | Mostra métricas de redução de saída e tokens estimados economizados |
+| `recall` | `weave recall <run-id>` | Imprime a saída bruta capturada de uma execução anterior |
+| `discover` | `weave discover` | Analisa transcrições de sessões passadas para estimar economia perdida |
+| `memory` | `weave memory <subcomando>` | Gerencia snapshots nomeados de `.weave/state.md` em `.weave/memories/` |
+
+### Snapshots de Contexto (`weave memory`)
+
+O `weave memory` permite salvar, listar e restaurar snapshots nomeados de `.weave/state.md` (ou de um arquivo especificado) dentro de `.weave/memories/<nome>.md`. Isso facilita marcar marcos do projeto, alternar entre tarefas e restaurar o contexto de trabalho:
+
+* `weave memory save <nome> [arquivo]`: salva o `.weave/state.md` atual (ou arquivo indicado) como `<nome>`.
+* `weave memory load <nome>`: restaura `<nome>` de volta para `.weave/state.md`.
+* `weave memory list`: lista todos os snapshots salvos ordenados por data de modificação.
+* `weave memory show <nome>`: imprime o conteúdo do snapshot no terminal sem carregá-lo.
+* `weave memory delete <nome>` (ou `rm`): remove o snapshot salvo.
+
+Os nomes são validados contra ataques de *path-traversal*, rejeitando `..`, separadores de caminho e links simbólicos.
 
 `gain --history` lista todo run registrado (timestamp, tipo, código de saída, bytes originais vs. apresentados, comando redigido) em vez de só o agregado.
 
 `discover` lê as transcrições de sessão locais do Claude Code deste projeto (`~/.claude/projects/<slug>/*.jsonl`), encontra comandos Bash que rodaram sem o wrapper do Weave (modo estava `off`, ou a sessão é anterior à instalação), e reproduz a saída registrada através dos filtros atuais para estimar a economia perdida. Nunca imprime comandos ou saída brutos — só contagens de bytes agrupadas por tipo de comando. Se não existir diretório de transcrições (projetos só-Codex, CI, instalações novas), ele diz isso e encerra normalmente.
-
-### Snapshots de Contexto (`weave memory`)
-
-O `weave memory` captura e restaura snapshots nomeados de `.weave/state.md` (ou de um arquivo customizado) dentro de `.weave/memories/<nome>.md`. Isso permite alternar entre tarefas, marcar pontos de checagem entre diferentes agentes (Claude Code, Codex CLI, Antigravity CLI) e restaurar o contexto anterior sem precisar redescobri-lo:
-
-* `weave memory save <nome> [arquivo]`: salva o `.weave/state.md` atual (ou o arquivo informado) como `<nome>`.
-* `weave memory load <nome>`: restaura `<nome>` de volta para `.weave/state.md`.
-* `weave memory list`: lista todos os snapshots salvos ordenados por data de modificação.
-* `weave memory show <nome>`: imprime o conteúdo do snapshot no stdout sem precisar carregá-lo.
-* `weave memory delete <nome>`: exclui um snapshot salvo.
-
-Os nomes são validados contra ataques de *path-traversal*, rejeitando `..`, separadores de caminho e links simbólicos.
 
 Rode os comandos a partir do repositório alvo para que modos, memória e histórico permaneçam locais ao projeto.
 
