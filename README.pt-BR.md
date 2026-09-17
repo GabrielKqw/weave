@@ -73,8 +73,10 @@ flowchart TD
 | Inteligência de terminal | Embrulha chamadas de shell elegíveis e remove saída repetitiva bem-sucedida |
 | Integridade de falha | Preserva saídas não-zero, stdout, stderr e linhas de diagnóstico |
 | Recuperação | Guarda capturas completas redigidas em `.weave/runs/` |
-| Continuidade de contexto | Orienta Claude Code e Codex CLI a manter um handoff compacto em `.weave/state.md` |
-| Snapshots de contexto | `weave memory` salva, restaura, lista e inspeciona snapshots de memória nomeados |
+| Continuidade de contexto | Orienta agentes a manter um contrato de pedido e memória de trabalho compactos em `.weave/state.md` |
+| Snapshots de contexto | `weave memory` salva, restaura, lista e inspeciona snapshots de memória nomeados em `.weave/memories/` |
+| Prevenção de leitura redundante | `hooks/preread.js` monitora leituras e buscas em `.weave/ledger.json`, alertando sobre releituras sem alterações |
+| Redação de segredos | Remove automaticamente tokens de API, chaves privadas, URLs de banco e cabeçalhos Bearer dos logs gravados |
 | Operações focadas | Fornece skills de review, auditoria de repositório, débito, ganho e ajuda |
 | Arquivos de regra multi-agente | Gera o mesmo texto de política pro Cursor, Cline, Windsurf, e qualquer agente que leia `AGENTS.md` |
 | Servidor MCP | Serve `get_policy`, `gain` e `discover` via stdio JSON-RPC pra clientes com capacidade MCP sem integração nativa de plugin |
@@ -136,16 +138,40 @@ O hook de lifecycle injeta a política ativa quando uma sessão ou subagente ini
 
 ## Perfis de Terminal
 
-O Weave reconhece:
+O Weave intercepta comandos elegíveis de shell e aplica perfis de redução conservadores e específicos para cada ferramenta:
 
-- Git status, diff, log, branch, stash, fetch, pull, push, add e commit;
-- `rg`, `grep`, listagens de diretório, `find` e `fd`;
-- comandos de teste de JavaScript, Python, Rust, Go, .NET, Java, Ruby (RSpec, Rake), Jest, Vitest e Playwright;
-- builds, linters, formatadores (Prettier), gerenciadores de pacote (npm/pnpm/yarn/bun/pip/cargo, incluindo `outdated`/`list`), Docker, Kubernetes, Terraform e logs de sistema;
-- GitHub CLI (`gh pr`, `gh run`, `gh issue` condensados; `gh api` mantido verbatim como JSON estruturado);
-- saída longa e repetitiva através de um fallback conservador.
+* **Comandos Git**:
+  * `git status`: Condensa listas longas de arquivos modificados e não rastreados por seção, removendo linhas de instrução repetitivas (ex: `(use "git add <file>..." to include in what will be committed)`).
+  * `git diff`: Remove linhas de índice ruidosas (ex: `index 1234..5678 100644`), mantendo todos os blocos de diff (*hunks*) completamente intactos.
+  * `git log`: Condensa mensagens de commit com várias linhas em entradas concisas de uma linha. Saídas gráficas (`--graph`) e formatos explícitos não são alterados.
+  * `git branch`, `stash`, `fetch`, `pull`, `push`, `add`, `commit`: Passam direto ou são condensados limpamente sem poluição visual.
+* **Executores de Testes (Test Runners)**:
+  * Suporta o executor nativo do Node.js (`node --test`), Jest, Vitest, Playwright, Python (`pytest`, `unittest`), Rust (`cargo test`), Go (`go test`), .NET, Java (`mvn test`, `gradle test`) e Ruby (`rspec`, `rake test`).
+  * Em caso de sucesso (`exit 0`): Colapsa centenas de linhas repetitivas de testes aprovados no resumo final, alcançando até 96,4% de redução de saída.
+  * Em caso de falha (`exit != 0`): **Nunca é reduzido.** Toda a saída de erro, diffs de asserção e rastreamento de pilha (*stack traces*) são preservados integralmente.
+* **Busca no Código**:
+  * Suporta `grep`, `ripgrep` (`rg`), `find` e `fd`.
+  * Agrupa correspondências repetidas sob o cabeçalho de cada arquivo correspondente, eliminando a repetição constante de caminhos.
+* **Gerenciadores de Pacote**:
+  * Suporta `npm`, `pnpm`, `yarn`, `bun`, `pip` e `cargo` (incluindo `install`, `outdated` e `list`).
+  * Condensa árvores de dependência repetitivas e barras de progresso, preservando tabelas de versão, avisos e mensagens de erro.
+* **Linters e Formatadores**:
+  * Suporta Prettier e ESLint: execuções de formatação limpas são condensadas; erros de sintaxe e violações de regras são exibidos imediatamente.
+* **Infraestrutura e Nuvem**:
+  * Suporta Docker, Kubernetes (`kubectl`), Terraform e logs do sistema operacional.
+* **GitHub CLI**:
+  * `gh pr`, `gh run`, `gh issue`: Condensados em tabelas concisas.
+  * `gh api`: Sempre mantido verbatim como JSON estruturado.
+* **Fallback Genérico**:
+  * Colapsa linhas idênticas consecutivas com uma contagem de repetição.
+  * Trunca o miolo repetitivo de saídas excessivamente longas, mantendo o início (*head*) e o fim (*tail*) intactos.
 
-Saída pequena passa direto. Se um relatório reduzido ficasse do mesmo tamanho que a saída original, o Weave retorna a saída original e registra economia zero. Comandos que falham permanecem completos. Leitura de arquivos, pagers, head/tail, `sed` e saída JSON explícita permanecem verbatim. Cada stream capturado é limitado a 20 MB.
+### Garantias de Integridade da Saída
+
+1. **Integridade em Falhas**: Qualquer comando com código de saída diferente de zero preserva 100% de seu stdout, stderr e diagnósticos.
+2. **Passagem Direta para Saídas Curtas**: Saídas pequenas que não atingem o limite do perfil passam sem qualquer modificação.
+3. **Verbatim por Projeto**: Leitura de arquivos (`cat`, `head`, `tail`), paginadores (`less`), `sed` e saídas JSON explícitas nunca são alteradas.
+4. **Limite de Segurança**: Todo stream capturado é limitado a 20 MB. Os logs brutos capturados têm seus segredos higienizados antes de serem salvos em `.weave/runs/`.
 
 ## Benchmarks
 
@@ -303,45 +329,108 @@ O Weave inclui uma CLI direta (`weave` ou `node cli/weave.js`) para diagnóstico
 
 | Comando | Uso | Descrição |
 | --- | --- | --- |
-| `doctor` | `weave doctor [--agent=...]` | Verifica ambiente Node, executável bash, manifestos de plugin e permissões |
+| `doctor` | `weave doctor [--agent=...]` | Verifica ambiente Node.js, executável bash, manifestos de plugin e permissões |
 | `mode` | `weave mode [off\|lite\|full\|ultra]` | Exibe ou define a política ativa de engenharia (`.weave/mode`) |
 | `exec` | `weave exec -- <comando>` | Executa um comando no shell aplicando os filtros de redução do Weave |
 | `gain` | `weave gain [--history]` | Mostra métricas de redução de saída e tokens estimados economizados |
-| `recall` | `weave recall <run-id>` | Imprime a saída bruta capturada de uma execução anterior |
+| `recall` | `weave recall <run-id>` | Imprime a saída bruta capturada de uma execução anterior pelo ID de 12 caracteres |
 | `discover` | `weave discover` | Analisa transcrições de sessões passadas para estimar economia perdida |
 | `memory` | `weave memory <subcomando>` | Gerencia snapshots nomeados de `.weave/state.md` em `.weave/memories/` |
 
-### Snapshots de Contexto (`weave memory`)
+### Referência Detalhada de Comandos
 
-O `weave memory` permite salvar, listar e restaurar snapshots nomeados de `.weave/state.md` (ou de um arquivo especificado) dentro de `.weave/memories/<nome>.md`. Isso facilita marcar marcos do projeto, alternar entre tarefas e restaurar o contexto de trabalho:
+#### `weave doctor`
+Verifica a compatibilidade do ambiente local:
+* Versão do Node.js (requer `>=18`).
+* Disponibilidade do Bash (Git Bash no Windows ou `bash` do sistema no Linux/macOS; reporta `WARN` em vez de `FAIL` para agentes como Antigravity e Codex que não dependem do bash para execução).
+* Integridade dos manifestos de plugins (`.claude-plugin/`, `.codex-plugin/`, `.agents/plugins/`, `GEMINI.md`, `hooks/hooks.json`).
+* Permissão de escrita no diretório `.weave/` para persistência local.
 
-* `weave memory save <nome> [arquivo]`: salva o `.weave/state.md` atual (ou arquivo indicado) como `<nome>`.
-* `weave memory load <nome>`: restaura `<nome>` de volta para `.weave/state.md`.
-* `weave memory list`: lista todos os snapshots salvos ordenados por data de modificação.
-* `weave memory show <nome>`: imprime o conteúdo do snapshot no terminal sem carregá-lo.
-* `weave memory delete <nome>` (ou `rm`): remove o snapshot salvo.
+#### `weave mode [off|lite|full|ultra]`
+Consulta ou altera o modo ativo armazenado em `.weave/mode`:
+* Sem argumentos: imprime o modo atual.
+* Com o nome do modo: atualiza `.weave/mode` para `off`, `lite`, `full`, ou `ultra`.
 
-Os nomes são validados contra ataques de *path-traversal*, rejeitando `..`, separadores de caminho e links simbólicos.
+#### `weave exec -- <comando>`
+Executa `<comando>` como um subprocesso:
+* Saídas com código diferente de zero (erros): A saída é preservada 100% intacta.
+* Saídas com código zero (sucesso): Saídas correspondentes a perfis de terminal (testes, git, grep, npm, etc.) são condensadas.
+* Se linhas forem omitidas, a saída bruta é salva em `.weave/runs/<id>.raw.txt` e um comando de recuperação é exibido no terminal.
 
-`gain --history` lista todo run registrado (timestamp, tipo, código de saída, bytes originais vs. apresentados, comando redigido) em vez de só o agregado.
+#### `weave gain [--history]`
+Reporta a economia medida localmente de todas as execuções registradas em `.weave/runs/`:
+* `weave gain`: imprime o resumo agregado (comandos gravados, bytes brutos, bytes apresentados, % de redução, tokens aproximados economizados).
+* `weave gain --history`: imprime o registro tabular de cada execução individual com data/hora, tipo de comando, código de saída e bytes.
 
-`discover` lê as transcrições de sessão locais do Claude Code deste projeto (`~/.claude/projects/<slug>/*.jsonl`), encontra comandos Bash que rodaram sem o wrapper do Weave (modo estava `off`, ou a sessão é anterior à instalação), e reproduz a saída registrada através dos filtros atuais para estimar a economia perdida. Nunca imprime comandos ou saída brutos — só contagens de bytes agrupadas por tipo de comando. Se não existir diretório de transcrições (projetos só-Codex, CI, instalações novas), ele diz isso e encerra normalmente.
+#### `weave recall <run-id>`
+Recupera a saída original de um comando que teve linhas omitidas utilizando o ID de 12 caracteres exibido no momento da execução (ex: `weave recall 4f12ab90cd34`).
 
-Rode os comandos a partir do repositório alvo para que modos, memória e histórico permaneçam locais ao projeto.
+#### `weave discover`
+Lê transcrições de sessões locais (`~/.claude/projects/<slug>/*.jsonl`), localiza comandos executados fora do wrapper do Weave e calcula quantos bytes teriam sido economizados. Não executa comandos nem altera arquivos.
 
-O Weave escreve apenas:
+#### `weave memory <subcomando>`
+Captura, restaura e inspeciona snapshots nomeados de contexto salvos em `.weave/memories/<nome>.md`:
+* `weave memory save <nome> [arquivo]`: copia o `.weave/state.md` atual (ou um arquivo customizado) para `.weave/memories/<nome>.md`.
+* `weave memory load <nome>`: restaura `.weave/memories/<nome>.md` de volta para `.weave/state.md`.
+* `weave memory list`: lista todos os snapshots de memória salvos com tamanho e data de modificação.
+* `weave memory show <nome>`: exibe o conteúdo de `<nome>.md` no terminal sem sobrescrever `.weave/state.md`.
+* `weave memory delete <nome>` (ou `rm`): exclui o arquivo `.weave/memories/<nome>.md`.
+* Segurança: Os nomes de memória são restritos a `[a-zA-Z0-9_.-]`, rejeitam `..` e separadores de caminho, e recusam ler ou escrever através de links simbólicos (`fs.lstatSync`).
 
-```text
-.weave/mode
-.weave/state.md
-.weave/memories/<nome>.md
-.weave/runs/<id>.json
-.weave/runs/<id>.raw.txt
+---
+
+## Continuidade de Contexto e o Contrato de Pedido (`.weave/state.md`)
+
+O Weave estrutura a memória de trabalho e as transições entre agentes através de um arquivo leve e legível em `.weave/state.md`. Ele mantém a sessão ancorada e evita perda de contexto:
+
+```markdown
+# Request contract
+
+- Goal: Definição clara e concisa do resultado desejado.
+- Constraints: Restrições rígidas (ex: apenas biblioteca padrão, zero dependências, compatibilidade retroativa).
+- Required: Entregáveis essenciais que devem ser construídos.
+- Not requested: Itens fora de escopo e abstrações especulativas (guardrail YAGNI).
+- Completion criteria: Evidências explícitas e testáveis necessárias antes de declarar conclusão.
+
+## Working memory
+- Decisões de arquitetura, caminhos de arquivo, particularidades descobertas e comandos reproduzíveis de teste.
 ```
 
-O histórico é podado para 200 runs ou 14 dias. Credenciais reconhecíveis, chaves privadas, cabeçalhos de autorização e credenciais em URL são redigidos antes da persistência. A redação é uma defesa em profundidade, não uma garantia; segredos não deveriam ser impressos num terminal.
+---
 
-Versionar `.weave/state.md` é uma escolha por projeto: versione quando o handoff entre Claude Code e Codex CLI deve ser compartilhado com o time e revisado como qualquer outro arquivo; coloque no `.gitignore` quando for contexto local ou o repositório ainda não tiver uma convenção. Siga a convenção do próprio repositório quando já existir uma, e nunca escreva segredos ali, seja qual for a escolha.
+## Prevenção de Leitura e Busca Redundante (`hooks/preread.js`)
+
+Em sessões longas de código, os agentes frequentemente relêem os mesmos arquivos inalterados ou repetem buscas idênticas, queimando milhares de tokens sem obter novas informações.
+
+O Weave rastreia as chamadas de ferramentas em `.weave/ledger.json`:
+* **Leituras de Arquivo (`Read`)**: Registra o caminho do arquivo e o timestamp de modificação. Se um agente reler um arquivo inalterado, o Weave injeta um lembrete para consultar a Memória de Trabalho em vez de reler.
+* **Buscas Idênticas (`Grep`, `Glob`)**: Rastreia consultas consecutivas idênticas e emite alerta se o sistema de arquivos não mudou.
+* As entradas do ledger são locais ao projeto e limpas automaticamente.
+
+---
+
+## Armazenamento, Privacidade e Redação de Segredos
+
+O Weave grava apenas arquivos locais ao projeto dentro de `.weave/`:
+
+```text
+.weave/
+├── mode                  # Modo de política ativo (off, lite, full, ultra)
+├── state.md              # Contrato de pedido ativo e memória de trabalho
+├── memories/             # Snapshots nomeados de contexto (<nome>.md)
+├── runs/                 # Relatórios higienizados (<id>.json) e saídas brutas (<id>.raw.txt)
+└── ledger.json           # Rastreamento de desduplicação de leitura e busca
+```
+
+### Segurança e Redação de Segredos
+Antes de gravar qualquer saída em disco em `.weave/runs/`:
+* IDs de chaves de acesso da AWS (`AKIA...`) são substituídos por `[REDACTED_AWS_KEY]`.
+* Tokens de acesso do GitHub (`ghp_...`, `github_pat_...`) são substituídos por `[REDACTED_GITHUB_TOKEN]`.
+* Cabeçalhos `Authorization: Bearer <token>` são sanitizados.
+* URLs de banco de dados, chaves privadas (`BEGIN PRIVATE KEY`) e atribuições genéricas de senhas/segredos são higienizadas.
+* O histórico é automaticamente podado para o máximo de 200 execuções ou 14 dias.
+
+Versionar `.weave/state.md` é uma escolha por projeto: versione quando o time compartilha o contrato e a memória de trabalho; coloque no `.gitignore` quando for usado como rascunho de contexto local. Nunca escreva credenciais ou dados sensíveis dentro de `.weave/state.md`.
 
 ## Skills Focadas
 
