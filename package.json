@@ -1,8 +1,8 @@
 {
   "name": "weave-agent-workflow",
   "version": "0.5.1",
-  "description": "Minimal workflow and terminal intelligence for Claude Code and Codex.",
-  "keywords": ["orchestration", "context", "workflow", "terminal", "verification", "mcp", "agent"],
+  "description": "Minimal workflow and terminal intelligence for Claude Code, Codex CLI, and Antigravity CLI.",
+  "keywords": ["orchestration", "context", "workflow", "terminal", "verification", "mcp", "agent", "antigravity-cli"],
   "author": "Gabriel Costa",
   "license": "MIT",
   "homepage": "https://github.com/GabrielKqw/weave",
