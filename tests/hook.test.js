@@ -54,7 +54,6 @@ test('hook rewrites ordinary Claude Bash input without a swallowed ReferenceErro
     tool_input: { command: 'git status' },
   });
   assert.equal(result.status, 0);
-  // An undefined `event` in the Codex guard used to throw and silently emit nothing.
   assert.notEqual(result.stdout, '', 'ordinary Claude input must produce a rewrite, not silently fail open');
   const out = JSON.parse(result.stdout);
   assert.equal(out.hookSpecificOutput.hookEventName, 'PreToolUse');

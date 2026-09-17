@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-// scripts/benchmark.js is the single source of truth for these numbers, so the
-// chart can't drift from what `npm run benchmark` actually measures.
 const fs = require('fs');
 const path = require('path');
 const { run } = require('./benchmark');
@@ -23,8 +21,6 @@ function escapeXml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// Rounded only at the data end (bar tip); square at the baseline - per the
-// project's mark spec (4px rounded data-end, square at the baseline).
 function barPath(x0, y, w, h, r) {
   if (w <= 0) return '';
   const x1 = x0 + w;

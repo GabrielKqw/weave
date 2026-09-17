@@ -36,9 +36,6 @@ function saveRun(cwd, meta, rawText) {
   const dir = runsDir(cwd);
   ensureDir(dir);
   const id = generateId();
-  // ts alone (millisecond resolution) can tie across rapid successive saves in
-  // the same process; hrns is a monotonic per-process tiebreaker so ordering
-  // doesn't depend on filesystem-dependent, unspecified directory listing order.
   const record = { id, ts: new Date().toISOString(), hrns: process.hrtime.bigint().toString(), hasRaw: Boolean(rawText), ...meta };
   fs.writeFileSync(path.join(dir, `${id}.json`), JSON.stringify(record, null, 2), { mode: 0o600 });
   if (rawText) {

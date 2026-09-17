@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-// core/mode.js is the single source of truth so wording can't drift between agents.
 const fs = require('fs');
 const path = require('path');
 const mode = require('../core/mode');
