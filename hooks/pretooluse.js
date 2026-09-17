@@ -22,9 +22,16 @@ function main() {
     return;
   }
 
+  if (
+    process.env.CODEX_SESSION_ID ||
+    process.env.CODEX_THREAD_ID ||
+    process.env.ANTIGRAVITY_SESSION_ID
+  ) {
+    return;
+  }
+  if (input.toolCall?.name === 'run_command' || input.tool_name === 'run_command') return;
   if (input.hook_event_name !== 'PreToolUse') return;
   if (input.tool_name !== 'Bash') return;
-  if (process.env.CODEX_SESSION_ID || process.env.CODEX_THREAD_ID) return;
 
   const execCore = require('../core/exec');
   if (!execCore.shouldWrap(input.tool_input || {})) return;
