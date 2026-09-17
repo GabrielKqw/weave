@@ -166,13 +166,18 @@ function checkJson(label, filePath, results) {
   }
 }
 
+function hasCodexEnv() {
+  if (process.env.OPENAI_CLI_MODEL) return true;
+  return Object.keys(process.env).some((key) => key.startsWith('CODEX_'));
+}
+
 function detectAgent(argv = []) {
   for (const arg of argv) {
     if (arg.startsWith('--agent=')) return arg.slice(8).toLowerCase();
     if (arg === 'antigravity' || arg === 'codex' || arg === 'claude') return arg;
   }
   if (process.env.ANTIGRAVITY_SESSION_ID) return 'antigravity';
-  if (process.env.CODEX_SESSION_ID || process.env.CODEX_THREAD_ID) return 'codex';
+  if (hasCodexEnv()) return 'codex';
   if (process.env.WEAVE_AGENT) return process.env.WEAVE_AGENT.toLowerCase();
   return null;
 }

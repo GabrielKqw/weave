@@ -11,8 +11,10 @@ const HOOK_PATH = path.join(__dirname, '..', 'hooks', 'pretooluse.js');
 function runHook(inputObj, env = {}) {
   const input = typeof inputObj === 'string' ? inputObj : JSON.stringify(inputObj);
   const cleanEnv = { ...process.env };
-  delete cleanEnv.CODEX_SESSION_ID;
-  delete cleanEnv.CODEX_THREAD_ID;
+  for (const key of Object.keys(cleanEnv)) {
+    if (key.startsWith('CODEX_')) delete cleanEnv[key];
+  }
+  delete cleanEnv.OPENAI_CLI_MODEL;
   delete cleanEnv.ANTIGRAVITY_SESSION_ID;
   return spawnSync('node', [HOOK_PATH], { input, encoding: 'utf8', env: { ...cleanEnv, ...env } });
 }
@@ -72,6 +74,22 @@ test('hook does not rewrite commands inside Codex', () => {
   );
   assert.equal(result.status, 0);
   assert.equal(result.stdout, '');
+});
+
+test('hook does not rewrite commands under Codex CLI variants (managed package root, npm model env)', () => {
+  const managedResult = runHook(
+    { hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'git status' } },
+    { CODEX_MANAGED_PACKAGE_ROOT: 'C:\\codex\\pkg' }
+  );
+  assert.equal(managedResult.status, 0);
+  assert.equal(managedResult.stdout, '');
+
+  const modelResult = runHook(
+    { hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'git status' } },
+    { OPENAI_CLI_MODEL: 'gpt-5.4-codex' }
+  );
+  assert.equal(modelResult.status, 0);
+  assert.equal(modelResult.stdout, '');
 });
 
 test('hook ignores non-PreToolUse events', () => {

@@ -85,3 +85,42 @@ test('weave doctor --agent=antigravity reports bash as warn/optional instead of 
   assert.doesNotMatch(result.stdout, /FAIL\s+bash executable/);
 });
 
+function cleanAgentEnv() {
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (key.startsWith('CODEX_')) delete env[key];
+  }
+  delete env.OPENAI_CLI_MODEL;
+  delete env.ANTIGRAVITY_SESSION_ID;
+  delete env.WEAVE_AGENT;
+  return env;
+}
+
+function runDoctor(extraEnv) {
+  const cliPath = path.join(ROOT, 'cli', 'weave.js');
+  return spawnSync(process.execPath, [cliPath, 'doctor'], {
+    encoding: 'utf8',
+    env: { ...cleanAgentEnv(), ...extraEnv },
+  });
+}
+
+test('weave doctor detects codex via CODEX_MANAGED_PACKAGE_ROOT', () => {
+  const result = runDoctor({ CODEX_MANAGED_PACKAGE_ROOT: 'C:\\codex\\pkg' });
+  assert.match(result.stdout, /detected agent - codex/);
+});
+
+test('weave doctor detects codex via OPENAI_CLI_MODEL', () => {
+  const result = runDoctor({ OPENAI_CLI_MODEL: 'gpt-5.4-codex' });
+  assert.match(result.stdout, /detected agent - codex/);
+});
+
+test('weave doctor gives ANTIGRAVITY_SESSION_ID precedence over Codex env vars', () => {
+  const result = runDoctor({
+    ANTIGRAVITY_SESSION_ID: 'session-123',
+    CODEX_MANAGED_PACKAGE_ROOT: 'C:\\codex\\pkg',
+    OPENAI_CLI_MODEL: 'gpt-5.4-codex',
+  });
+  assert.match(result.stdout, /detected agent - antigravity/);
+  assert.doesNotMatch(result.stdout, /detected agent - codex/);
+});
+
