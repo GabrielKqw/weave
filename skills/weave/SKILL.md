@@ -175,6 +175,43 @@ findings live during the task, so they don't have to be rediscovered:
 Update it as you go, not as a wrap-up at the end — it's only useful if
 it's current when the next read-or-reread decision comes up.
 
+#### Operational Memory Standards
+
+Working memory records *engineering knowledge*, not an inventory. Never
+write a shallow census — a file count, a line count, a table/column
+frequency tally, or a bare list of filenames with no explanation of what
+they do or why they matter ("there are 168 files", "table PRODNFI
+appears 116 times"). A census can always be regenerated with `find` or
+`grep`; it isn't worth a line in memory. What's worth recording is what a
+search can't hand back on its own: what the code actually does, why it
+breaks, and what's still unverified.
+
+Every entry you save — here or via `weave memory save` (see section 7)
+— must fit one of the five Operational Memory Pillars:
+
+1. **Execution Flow & Trace** — the real call path from trigger to
+   effect: UI action or entry point → handler → business logic →
+   persistence or external service call. Name the functions/files in
+   the path, not just the endpoints.
+2. **Business Rules & Invariants** — validation rules, constraints, and
+   domain-specific transformations the code enforces, stated as rules
+   ("X must be non-negative before Y runs"), not as a description of
+   the file that happens to contain them.
+3. **Failure Modes, Defect Root Causes & Error Codes** — the exact
+   mechanism behind a bug (not just its symptom), specific error codes
+   encountered (e.g. SEFAZ 1001), and the edge case that triggers each
+   one.
+4. **Integration Contracts & Schema Mappings** — how tables/entities/
+   services connect: keys, required fields, schema constraints, and the
+   assumptions each side of an integration makes about the other.
+5. **Test & Verification Gaps** — what's actually been verified (with
+   how), what remains untested, and the concrete repro steps for
+   anything still open.
+
+If a fact doesn't fit one of these five pillars, it likely isn't worth
+recording — prefer re-deriving it with a targeted search over saving
+noise.
+
 When Weave's own reread-detection hook is active in Claude Code
 (`hooks/preread.js`, matching the `Read`/`Grep`/`Glob` tools), a repeated
 read or search on content that hasn't changed surfaces a short reminder
@@ -366,6 +403,12 @@ Rules:
 - Never write secrets, tokens, credentials, full log dumps, or personal
   data into this file — it's meant to be readable and, in most projects,
   committable.
+- Working memory and any `weave memory save` entry must follow the
+  Operational Memory Standards defined in section 3: no shallow census
+  (file counts, line counts, table/column frequency tallies, bare
+  filename lists) — record execution flow, business rules and
+  invariants, failure modes/root causes/error codes, integration
+  contracts and schema mappings, and test/verification gaps instead.
 - Whether `.weave/state.md` is committed or gitignored is a per-project
   choice — see the README for the tradeoff. Don't decide this silently;
   if the project has no existing convention, ask or leave it untracked by
