@@ -40,6 +40,28 @@ test('package and plugin versions agree', () => {
   assert.equal(pkg.scripts.test, 'node --test');
 });
 
+test('package.json files field ships .agents, GEMINI.md, and AGENTS.md', () => {
+  const pkg = readJson('package.json');
+  assert.ok(pkg.files.includes('.agents'));
+  assert.ok(pkg.files.includes('GEMINI.md'));
+  assert.ok(pkg.files.includes('AGENTS.md'));
+});
+
+test('weave --help and weave -h print usage and exit 0', () => {
+  const cliPath = path.join(ROOT, 'cli', 'weave.js');
+  for (const flag of ['--help', '-h', 'help']) {
+    const result = spawnSync(process.execPath, [cliPath, flag], { encoding: 'utf8' });
+    assert.equal(result.status, 0, `expected exit 0 for "${flag}"`);
+    assert.match(result.stdout, /^Usage: weave/);
+  }
+});
+
+test('weave with an unknown subcommand exits 2', () => {
+  const cliPath = path.join(ROOT, 'cli', 'weave.js');
+  const result = spawnSync(process.execPath, [cliPath, 'bogus-subcommand'], { encoding: 'utf8' });
+  assert.equal(result.status, 2);
+});
+
 test('.agents/plugins/marketplace.json is valid and points at the local plugin root', () => {
   const mkt = readJson('.agents/plugins/marketplace.json');
   assert.equal(mkt.name, 'weave');

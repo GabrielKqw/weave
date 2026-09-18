@@ -397,6 +397,12 @@ function main() {
       return cmdDoctor(rest);
     case 'memory':
       return cmdMemory(rest);
+    case 'help':
+    case '--help':
+    case '-h':
+      process.stdout.write('Usage: weave <doctor|mode [off|lite|full|ultra]|gain|discover|recall <id>|memory <save|load|list|show|delete>|exec -- <command>>\n');
+      process.exitCode = 0;
+      return;
     default:
       process.stdout.write('Usage: weave <doctor|mode [off|lite|full|ultra]|gain|discover|recall <id>|memory <save|load|list|show|delete>|exec -- <command>>\n');
       process.exitCode = cmd ? 2 : 0;

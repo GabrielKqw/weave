@@ -17,7 +17,7 @@
   "bin": {
     "weave": "cli/weave.js"
   },
-  "files": ["cli", "core", "hooks", "skills", "mcp", "commands", ".claude-plugin", ".codex-plugin", "README.md", "LICENSE"],
+  "files": ["cli", "core", "hooks", "skills", "mcp", "commands", ".claude-plugin", ".codex-plugin", ".agents", "GEMINI.md", "AGENTS.md", "README.md", "LICENSE"],
   "scripts": {
     "test": "node --test",
     "benchmark": "node scripts/benchmark.js",
