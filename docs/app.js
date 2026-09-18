@@ -349,8 +349,9 @@ document.addEventListener('DOMContentLoaded', () => {
     claude: 'claude plugin marketplace add GabrielKqw/weave --scope user\nclaude plugin install weave@weave --scope user',
     codex: 'codex plugin marketplace add GabrielKqw/weave\ncodex plugin add weave@weave',
     agy: 'git clone https://github.com/GabrielKqw/weave.git\ncd weave && agy plugin install ./',
-    standalone: 'git clone https://github.com/GabrielKqw/weave.git\ncd weave && npm pack && npm install --global ./weave-agent-workflow-0.5.1.tgz'
+    standalone: 'npm install --global weave-agent-workflow\n# Or run directly without installation:\nnpx weave-agent-workflow doctor'
   };
+
 
   const installTabs = document.querySelectorAll('.install-tab-btn');
   const installCode = document.getElementById('install-snippet');

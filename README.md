@@ -9,9 +9,11 @@ Minimal engineering policy, terminal intelligence, context continuity, and verif
 [Documentation & Demo](https://gabrielkqw.github.io/weave) | [Why Weave?](#why-weave) | [See it in action](#see-weave-in-action) | [Architecture](#architecture) | [Benchmarks](#benchmarks) | [Installation](#installation)
 
 [![CI](https://github.com/GabrielKqw/weave/actions/workflows/ci.yml/badge.svg)](https://github.com/GabrielKqw/weave/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/weave-agent-workflow.svg)](https://www.npmjs.com/package/weave-agent-workflow)
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/runtime_dependencies-0-111111)
 ![Version](https://img.shields.io/badge/version-0.5.1-2563eb)
+
 
 </div>
 
@@ -309,19 +311,25 @@ claude plugin install weave@weave --scope project
 node cli/weave.js doctor
 ```
 
-### Standalone (no Claude Code or Codex)
+### Standalone (npm & npx)
 
-The package has no runtime dependency and is npm-packagable for agents and editors that use neither plugin marketplace. It is not yet published to the npm registry; install locally from a clone:
+Weave has zero runtime dependencies and is published on the npm registry as [`weave-agent-workflow`](https://www.npmjs.com/package/weave-agent-workflow).
+
+Run directly without installation:
 
 ```bash
-git clone https://github.com/GabrielKqw/weave.git
-cd weave
-npm pack
-npm install --global ./weave-agent-workflow-0.5.1.tgz
+npx weave-agent-workflow doctor
+```
+
+Or install globally:
+
+```bash
+npm install --global weave-agent-workflow
 weave doctor
 ```
 
 Then either call `weave exec -- <command>` yourself or point an MCP client at `mcp/server.js` (see [MCP server](#mcp-server)).
+
 
 ## CLI Commands & Subcommands
 
