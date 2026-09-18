@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 'use strict';
 
+const fs = require('fs');
 const readline = require('readline');
 const modes = require('../core/mode');
 const storage = require('../core/storage');
 const discover = require('../core/discover');
+const memory = require('../core/memory');
 const { version } = require('../package.json');
 
 const SERVER_INFO = { name: 'weave-mcp', version };
@@ -28,20 +30,93 @@ const TOOLS = [
     description: 'Estimate output reduction missed in past Claude Code sessions for this project, not wrapped by Weave.',
     inputSchema: { type: 'object', properties: { cwd: { type: 'string' } } },
   },
+  {
+    name: 'memory_save',
+    description: 'Save a memory snapshot into .weave/memories/<name>.md',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        file: { type: 'string' },
+        cwd: { type: 'string' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'memory_load',
+    description: 'Load a memory snapshot from .weave/memories/<name>.md into .weave/state.md',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        cwd: { type: 'string' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'memory_list',
+    description: 'List saved memories in this project',
+    inputSchema: {
+      type: 'object',
+      properties: { cwd: { type: 'string' } },
+    },
+  },
+  {
+    name: 'memory_show',
+    description: 'Show content of a saved memory snapshot',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        cwd: { type: 'string' },
+      },
+      required: ['name'],
+    },
+  },
 ];
 
 function text(str) {
   return { content: [{ type: 'text', text: str }] };
 }
 
+function assertValidDir(cwd) {
+  let stat;
+  try {
+    stat = fs.statSync(cwd);
+  } catch {
+    throw new Error(`invalid directory: ${cwd}`);
+  }
+  if (!stat.isDirectory()) throw new Error(`invalid directory: ${cwd}`);
+}
+
+function toolArgs(args) {
+  if (args === null || typeof args !== 'object' || Array.isArray(args)) {
+    throw new Error('invalid tool arguments');
+  }
+  return args;
+}
+
+function toolCwd(args) {
+  if (args.cwd === undefined) return process.cwd();
+  if (typeof args.cwd !== 'string' || !args.cwd) throw new Error(`invalid directory: ${args.cwd}`);
+  assertValidDir(args.cwd);
+  return args.cwd;
+}
+
 function callTool(name, args = {}) {
-  const cwd = typeof args.cwd === 'string' && args.cwd ? args.cwd : process.cwd();
+  args = toolArgs(args);
   switch (name) {
     case 'get_policy': {
-      const mode = modes.MODES.has(args.mode) ? args.mode : 'full';
+      if (args.mode !== undefined && !modes.MODES.has(args.mode)) {
+        throw new Error(`invalid mode: ${args.mode}`);
+      }
+      const mode = args.mode || 'full';
       return text(modes.instructions(mode));
     }
     case 'gain': {
+      const cwd = toolCwd(args);
       const runs = storage.listRuns(cwd);
       if (runs.length === 0) return text('No recorded runs yet in .weave/runs/.');
       const originalBytes = runs.reduce((s, r) => s + (r.originalBytes || 0), 0);
@@ -50,10 +125,34 @@ function callTool(name, args = {}) {
       return text(`Commands recorded: ${runs.length}\nRaw bytes: ${originalBytes}\nReport bytes: ${presentedBytes}\nReduction: ${pct}%`);
     }
     case 'discover': {
+      const cwd = toolCwd(args);
       const result = discover.scan({ cwd });
       if (!result.found) return text(`No Claude Code session history found at ${result.dir}`);
       const missed = Math.max(0, result.originalBytes - result.presentedBytes);
       return text(`Session files: ${result.files}\nUnwrapped commands: ${result.analyzed}\nEstimated missed savings: ${missed} bytes`);
+    }
+    case 'memory_save': {
+      const cwd = toolCwd(args);
+      if (args.file !== undefined && (typeof args.file !== 'string' || !args.file)) {
+        throw new Error('invalid source file');
+      }
+      const dest = memory.saveMemory(cwd, args.name, args.file);
+      return text(`Saved memory "${args.name}" -> ${dest}`);
+    }
+    case 'memory_load': {
+      const cwd = toolCwd(args);
+      const dest = memory.loadMemory(cwd, args.name);
+      return text(`Loaded memory "${args.name}" -> ${dest}`);
+    }
+    case 'memory_list': {
+      const cwd = toolCwd(args);
+      const items = memory.listMemories(cwd);
+      if (items.length === 0) return text('No memories saved yet. Use memory_save to create one.');
+      return text(items.map((item) => `${item.modified.toISOString()}  ${String(item.size).padStart(8)}B  ${item.name}`).join('\n'));
+    }
+    case 'memory_show': {
+      const cwd = toolCwd(args);
+      return text(memory.showMemory(cwd, args.name));
     }
     default:
       throw new Error(`unknown tool: ${name}`);
@@ -75,6 +174,7 @@ function handle(msg) {
     return respond(id, { protocolVersion: '2024-11-05', capabilities: { tools: {} }, serverInfo: SERVER_INFO });
   }
   if (method === 'notifications/initialized') return;
+  if (method === 'ping') return respond(id, {});
   if (method === 'tools/list') return respond(id, { tools: TOOLS });
   if (method === 'tools/call') {
     try {

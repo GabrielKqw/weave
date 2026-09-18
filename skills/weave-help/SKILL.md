@@ -9,6 +9,6 @@ Give a compact reference for:
 
 - modes: `off`, `lite`, `full`, `ultra` through `/weave <mode>`;
 - skills: `weave`, `weave-review`, `weave-audit`, `weave-debt`, `weave-gain`;
-- CLI: `doctor`, `mode`, `exec`, `recall`, `gain`, `memory`.
+- CLI: `doctor`, `mode`, `exec`, `recall`, `gain`, `discover`, `memory`.
 
 Mention that failed commands and explicit JSON or file-reading commands remain verbatim.
