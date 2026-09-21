@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1
+
+- Release 0.6.1: Weave SuperPrompt meta-prompting engine, operational memory tools, strict XML escaping, and CLI prompt commands.
+
 ## 0.6.0
 
 - Added Weave SuperPrompt meta-prompting engine (`core/prompt.js`) with structured XML schema (`<weave_superprompt>`), request contract serialization, 5-pillar operational memory extraction, finite step budgeting (`<step>`), quantitative reward scoring (`<reward>`), and automated backtracking (`<backtrack>`).
