@@ -17,11 +17,11 @@ function writeTranscript(dir, lines) {
 
 test('projectTranscriptsDir matches Claude Code\'s real slug format (one dash per separator char)', () => {
   if (process.platform === 'win32') {
-    const dir = discover.projectTranscriptsDir('C:\\Users\\Admin\\Desktop\\Projetos\\Weave');
-    assert.ok(dir.endsWith(path.join('.claude', 'projects', 'C--Users-Admin-Desktop-Projetos-Weave')));
+    const dir = discover.projectTranscriptsDir('C:\\Users\\user\\Desktop\\Projects\\Weave');
+    assert.ok(dir.endsWith(path.join('.claude', 'projects', 'C--Users-user-Desktop-Projects-Weave')));
   } else {
-    const dir = discover.projectTranscriptsDir('/home/admin/projetos/weave');
-    assert.ok(dir.endsWith(path.join('.claude', 'projects', '-home-admin-projetos-weave')));
+    const dir = discover.projectTranscriptsDir('/home/user/projects/weave');
+    assert.ok(dir.endsWith(path.join('.claude', 'projects', '-home-user-projects-weave')));
   }
 });
 

@@ -7,7 +7,7 @@ const { shellQuoteSingle, toGitBashPath } = require('../core/quoting');
 const { bashExecutable } = require('../core/exec');
 
 test('toGitBashPath converts a Windows drive path to MSYS form', () => {
-  assert.equal(toGitBashPath('C:\\Users\\Admin\\Desktop\\Weave\\cli\\weave.js'), '/c/Users/Admin/Desktop/Weave/cli/weave.js');
+  assert.equal(toGitBashPath('C:\\Users\\user\\Desktop\\Weave\\cli\\weave.js'), '/c/Users/user/Desktop/Weave/cli/weave.js');
 });
 
 test('shellQuoteSingle round-trips arbitrary strings through a real POSIX shell', () => {

@@ -22,7 +22,7 @@ function runHook(inputObj, env = {}) {
 test('hook JSON protocol: rewrites an eligible Bash command with the expected shape', () => {
   const result = runHook({
     session_id: 'abc123',
-    cwd: 'C:\\Users\\Admin\\Desktop\\Projetos\\Weave',
+    cwd: 'C:\\Users\\user\\Desktop\\Projects\\Weave',
     hook_event_name: 'PreToolUse',
     tool_name: 'Bash',
     tool_input: { command: 'git status', timeout: 120000, run_in_background: false },
@@ -36,7 +36,7 @@ test('hook JSON protocol: rewrites an eligible Bash command with the expected sh
   assert.ok(cmd.startsWith(execCore.SENTINEL));
   assert.ok(cmd.includes('weave.js'));
   assert.ok(cmd.includes('exec --'));
-  assert.ok(cmd.includes("--cwd 'C:\\Users\\Admin\\Desktop\\Projetos\\Weave'"));
+  assert.ok(cmd.includes("--cwd 'C:\\Users\\user\\Desktop\\Projects\\Weave'"));
   assert.ok(cmd.includes("'git status'"));
   assert.equal(out.hookSpecificOutput.updatedInput.timeout, 120000);
   assert.equal(out.hookSpecificOutput.updatedInput.run_in_background, false);
@@ -131,9 +131,9 @@ test('hook preserves a Windows path embedded in the original command', () => {
   const result = runHook({
     hook_event_name: 'PreToolUse',
     tool_name: 'Bash',
-    tool_input: { command: 'cat "C:\\Users\\Admin\\Desktop\\Projetos\\Weave\\README.md"' },
+    tool_input: { command: 'cat "C:\\Users\\user\\Desktop\\Projects\\Weave\\README.md"' },
   });
   const out = JSON.parse(result.stdout);
   const cmd = out.hookSpecificOutput.updatedInput.command;
-  assert.ok(cmd.includes('C:\\Users\\Admin\\Desktop\\Projetos\\Weave\\README.md'));
+  assert.ok(cmd.includes('C:\\Users\\user\\Desktop\\Projects\\Weave\\README.md'));
 });

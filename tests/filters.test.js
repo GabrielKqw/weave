@@ -204,9 +204,9 @@ test('grep filter groups repeated file:line matches, preserving early context', 
 });
 
 test('grep filter groups relative and Windows absolute paths', () => {
-  const r = filters.filterGrep('src/app.js:7:function bar() {}\nC:\\Users\\Admin\\app.js:14:function foo() {}');
+  const r = filters.filterGrep('src/app.js:7:function bar() {}\nC:\\Users\\user\\app.js:14:function foo() {}');
   assert.ok(r.presented.includes('src/app.js (1 match)'));
-  assert.ok(r.presented.includes('C:\\Users\\Admin\\app.js (1 match)'));
+  assert.ok(r.presented.includes('C:\\Users\\user\\app.js (1 match)'));
   assert.equal(r.omitted, 0);
 });
 
