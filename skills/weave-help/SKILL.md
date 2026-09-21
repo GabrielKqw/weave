@@ -8,7 +8,7 @@ description: Explain the available Weave modes, operational skills, and CLI comm
 Give a compact reference for:
 
 - modes: `off`, `lite`, `full`, `ultra` through `/weave <mode>`;
-- skills: `weave`, `weave-review`, `weave-audit`, `weave-debt`, `weave-gain`;
-- CLI: `doctor`, `mode`, `exec`, `recall`, `gain`, `discover`, `memory`.
+- skills: `weave`, `weave-review`, `weave-audit`, `weave-debt`, `weave-gain`, `weave-prompt`;
+- CLI: `doctor`, `mode`, `exec`, `recall`, `gain`, `discover`, `memory`, `prompt`.
 
 Mention that failed commands and explicit JSON or file-reading commands remain verbatim.

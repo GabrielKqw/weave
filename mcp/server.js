@@ -7,6 +7,7 @@ const modes = require('../core/mode');
 const storage = require('../core/storage');
 const discover = require('../core/discover');
 const memory = require('../core/memory');
+const prompt = require('../core/prompt');
 const { version } = require('../package.json');
 
 const SERVER_INFO = { name: 'weave-mcp', version };
@@ -73,6 +74,24 @@ const TOOLS = [
         cwd: { type: 'string' },
       },
       required: ['name'],
+    },
+  },
+  {
+    name: 'prompt',
+    description:
+      'Generate a Weave SuperPrompt: an XML request contract, 5-pillar operational memory, budgeted step-by-step reasoning protocol, and the 6-question fidelity gate.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task: { type: 'string' },
+        mode: { type: 'string', enum: ['off', 'lite', 'full', 'ultra'] },
+        budget: { type: 'integer', minimum: 1, maximum: 50 },
+        load_state: { type: 'boolean' },
+        memory_name: { type: 'string' },
+        agent: { type: 'string' },
+        raw: { type: 'boolean' },
+        cwd: { type: 'string' },
+      },
     },
   },
 ];
@@ -154,6 +173,42 @@ function callTool(name, args = {}) {
       const cwd = toolCwd(args);
       return text(memory.showMemory(cwd, args.name));
     }
+    case 'prompt': {
+      const cwd = toolCwd(args);
+      if (args.task !== undefined && typeof args.task !== 'string') {
+        throw new Error('invalid task: must be a string');
+      }
+      if (args.mode !== undefined && (typeof args.mode !== 'string' || !modes.MODES.has(args.mode))) {
+        throw new Error(`invalid mode: ${args.mode}`);
+      }
+      if (args.budget !== undefined && (typeof args.budget !== 'number' || !Number.isInteger(args.budget) || args.budget < 1 || args.budget > 50)) {
+        throw new Error(`invalid budget: ${args.budget} (expected an integer between 1 and 50)`);
+      }
+      if (args.load_state !== undefined && typeof args.load_state !== 'boolean') {
+        throw new Error('invalid load_state: must be a boolean');
+      }
+      if (args.memory_name !== undefined && typeof args.memory_name !== 'string') {
+        throw new Error('invalid memory_name: must be a string');
+      }
+      if (args.agent !== undefined && typeof args.agent !== 'string') {
+        throw new Error('invalid agent: must be a string');
+      }
+      if (args.raw !== undefined && typeof args.raw !== 'boolean') {
+        throw new Error('invalid raw: must be a boolean');
+      }
+      return text(
+        prompt.buildSuperPrompt({
+          task: args.task,
+          mode: args.mode,
+          budget: args.budget,
+          state: Boolean(args.load_state),
+          memory: args.memory_name,
+          agent: args.agent,
+          raw: Boolean(args.raw),
+          cwd,
+        })
+      );
+    }
     default:
       throw new Error(`unknown tool: ${name}`);
   }
@@ -178,7 +233,8 @@ function handle(msg) {
   if (method === 'tools/list') return respond(id, { tools: TOOLS });
   if (method === 'tools/call') {
     try {
-      const result = callTool(params && params.name, (params && params.arguments) || {});
+      const toolArguments = params && Object.prototype.hasOwnProperty.call(params, 'arguments') ? params.arguments : {};
+      const result = callTool(params && params.name, toolArguments);
       return respond(id, result);
     } catch (e) {
       return respondError(id, e.message);

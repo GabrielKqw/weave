@@ -70,7 +70,7 @@ test('mcp server: tools/list exposes get_policy, gain, discover, and memory tool
     const names = res.result.tools.map((t) => t.name);
     assert.deepEqual(
       names.sort(),
-      ['discover', 'gain', 'get_policy', 'memory_list', 'memory_load', 'memory_save', 'memory_show']
+      ['discover', 'gain', 'get_policy', 'memory_list', 'memory_load', 'memory_save', 'memory_show', 'prompt']
     );
   });
 });

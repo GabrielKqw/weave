@@ -84,7 +84,7 @@ test('hooks/hooks.json declares a PreToolUse Bash matcher pointing at the real h
 });
 
 test('every bundled skill has matching frontmatter', () => {
-  const names = ['weave', 'weave-review', 'weave-audit', 'weave-debt', 'weave-gain', 'weave-help'];
+  const names = ['weave', 'weave-review', 'weave-audit', 'weave-debt', 'weave-gain', 'weave-help', 'weave-prompt'];
   for (const name of names) {
     const file = path.join(ROOT, 'skills', name, 'SKILL.md');
     const text = fs.readFileSync(file, 'utf8');

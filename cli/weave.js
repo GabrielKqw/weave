@@ -9,6 +9,7 @@ const storage = require('../core/storage');
 const modes = require('../core/mode');
 const discover = require('../core/discover');
 const memory = require('../core/memory');
+const prompt = require('../core/prompt');
 
 const PLUGIN_ROOT = path.join(__dirname, '..');
 
@@ -380,6 +381,86 @@ function cmdMemory(argv) {
   }
 }
 
+function cmdPrompt(argv) {
+  const options = { state: false, raw: false };
+  const taskParts = [];
+  let optionsDone = false;
+
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (optionsDone) {
+      taskParts.push(arg);
+      continue;
+    }
+    if (arg === '--') {
+      optionsDone = true;
+      continue;
+    }
+    if (arg === '--help' || arg === '-h') {
+      process.stdout.write('Usage: weave prompt [--mode=off|lite|full|ultra] [--budget=N] [--state] [--memory=NAME] [--agent=NAME] [--raw] [--cwd=DIR] [--] [task...]\n');
+      process.exitCode = 0;
+      return;
+    }
+    if (arg === '--state') {
+      options.state = true;
+    } else if (arg === '--raw') {
+      options.raw = true;
+    } else if (arg.startsWith('--mode=')) {
+      options.mode = arg.slice(7);
+    } else if (arg.startsWith('--budget=')) {
+      const rawBudget = arg.slice(9);
+      if (!/^\d+$/.test(rawBudget)) {
+        process.stderr.write(`weave prompt: invalid budget "${rawBudget}" (expected a decimal integer between 1 and 50)\n`);
+        process.exitCode = 2;
+        return;
+      }
+      options.budget = parseInt(rawBudget, 10);
+    } else if (arg.startsWith('--memory=')) {
+      options.memory = arg.slice(9);
+    } else if (arg.startsWith('--agent=')) {
+      options.agent = arg.slice(8);
+    } else if (arg.startsWith('--cwd=')) {
+      options.cwd = arg.slice(6);
+    } else if (arg.startsWith('-')) {
+      process.stderr.write(`weave prompt: unrecognized option "${arg}"\n`);
+      process.exitCode = 2;
+      return;
+    } else {
+      taskParts.push(arg);
+    }
+  }
+
+  if (options.mode !== undefined && !modes.MODES.has(options.mode)) {
+    process.stderr.write('weave prompt: --mode expects off, lite, full, or ultra\n');
+    process.exitCode = 2;
+    return;
+  }
+  if (options.budget !== undefined && (options.budget < 1 || options.budget > 50)) {
+    process.stderr.write(`weave prompt: invalid budget: ${options.budget} (expected an integer between 1 and 50)\n`);
+    process.exitCode = 2;
+    return;
+  }
+  if (options.cwd !== undefined) {
+    try {
+      if (!fs.statSync(options.cwd).isDirectory()) throw new Error('not a directory');
+    } catch (e) {
+      process.stderr.write(`weave prompt: invalid --cwd "${options.cwd}": ${e.message}\n`);
+      process.exitCode = 2;
+      return;
+    }
+  }
+
+  options.task = taskParts.join(' ');
+  options.agent = options.agent || detectAgent(argv);
+
+  try {
+    process.stdout.write(prompt.buildSuperPrompt(options) + '\n');
+  } catch (e) {
+    process.stderr.write(`weave prompt: ${e.message}\n`);
+    process.exitCode = 1;
+  }
+}
+
 function main() {
   const [, , cmd, ...rest] = process.argv;
   switch (cmd) {
@@ -397,14 +478,16 @@ function main() {
       return cmdDoctor(rest);
     case 'memory':
       return cmdMemory(rest);
+    case 'prompt':
+      return cmdPrompt(rest);
     case 'help':
     case '--help':
     case '-h':
-      process.stdout.write('Usage: weave <doctor|mode [off|lite|full|ultra]|gain|discover|recall <id>|memory <save|load|list|show|delete>|exec -- <command>>\n');
+      process.stdout.write('Usage: weave <doctor|mode [off|lite|full|ultra]|gain|discover|recall <id>|memory <save|load|list|show|delete>|prompt [options] [task]|exec -- <command>>\n');
       process.exitCode = 0;
       return;
     default:
-      process.stdout.write('Usage: weave <doctor|mode [off|lite|full|ultra]|gain|discover|recall <id>|memory <save|load|list|show|delete>|exec -- <command>>\n');
+      process.stdout.write('Usage: weave <doctor|mode [off|lite|full|ultra]|gain|discover|recall <id>|memory <save|load|list|show|delete>|prompt [options] [task]|exec -- <command>>\n');
       process.exitCode = cmd ? 2 : 0;
   }
 }
