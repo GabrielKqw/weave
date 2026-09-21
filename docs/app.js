@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
       nav_releases: 'Releases',
       github_btn: 'Star on GitHub',
 
-      hero_badge: 'v0.5.1 · Zero-Dependency CLI · Node.js 18+',
+      hero_badge: 'v0.6.1 · Zero-Dependency CLI · Node.js 18+',
       hero_title: 'Terminal intelligence and context continuity for coding agents.',
       hero_subtitle: 'Weave condenses repetitive CLI output by up to <strong>96.4%</strong>, prevents redundant file reads, and synchronizes working memory across Claude Code, OpenAI Codex, and Antigravity CLI. Pure Node.js standard library with 100% failure integrity.',
       copy_btn: 'Copy',
@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
       badge_audit: 'Audit',
       badge_policy: 'Policy',
       badge_analysis: 'Analysis',
+      badge_prompt: 'SuperPrompt',
 
       cmd_syntax_label: 'Syntax:',
       cmd_example_label: 'Real Example:',
@@ -84,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cmd_doctor_desc: 'Verifies Node.js runtime (>=18), bash path, plugin manifests integrity, and directory write permissions.',
       cmd_exec_desc: 'Executes any shell command through output reduction filters. Preserves non-zero exit codes, errors, and stack traces 100% verbatim.',
       cmd_memory_desc: 'Saves, restores, lists, and manages named snapshots of `.weave/state.md` under `.weave/memories/` for cross-agent task handoff.',
+      cmd_prompt_desc: 'Compiles a structured XML SuperPrompt with request contract, 5-pillar operational memory, bounded reasoning steps, reflection, reward scores, and 6 fidelity questions.',
       cmd_gain_desc: 'Calculates total byte reduction and approximate tokens saved across all wrapped runs in `.weave/runs/`.',
       cmd_recall_desc: 'Prints the full, raw captured output of any past command by its 12-character run ID, with automatic secret scrubbing.',
       cmd_mode_desc: 'Displays or updates the active engineering discipline policy in `.weave/mode`: `off`, `lite`, `full`, or `ultra`.',
@@ -122,6 +124,12 @@ document.addEventListener('DOMContentLoaded', () => {
       rel_desc: 'Track new features, bug fixes, and improvements across every Weave release.',
 
       rel_latest_tag: 'Latest Release',
+      rel_061_title: 'Weave SuperPrompt Meta-Prompting Engine & Reasoning Protocol',
+      rel_061_item1: 'SuperPrompt Engine: Compiles structured XML meta-prompts with request contracts, 5-pillar operational memory, step budgeting, reflection, quantitative reward scoring (0.0-1.0), and backtracking.',
+      rel_061_item2: 'New weave prompt CLI & MCP Tool: Full command-line and stdio JSON-RPC tool support with strict decimal budget parsing and option termination (--).',
+      rel_061_item3: 'New weave-prompt Skill: Specialized for portable task contracts, autonomous agent delegation, and cross-session handoffs.',
+      rel_061_item4: 'Hardened XML 1.0 Legality: Sanitizes NUL and control bytes while normalizing lone surrogates, validated by 159 passing tests.',
+
       rel_051_title: 'Context Snapshots, Secret Redaction & Hook Hardening',
       rel_051_item1: 'Added weave memory CLI: Full context snapshot management (save, load, list, show, delete) with symlink and path traversal protection.',
       rel_051_item2: 'Hardened Secret Redaction: Added regex scrubbing for bare JSON Web Tokens (JWT) starting with eyJ without requiring a Bearer prefix.',
@@ -149,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
       nav_releases: 'Versões',
       github_btn: 'Ver no GitHub',
 
-      hero_badge: 'v0.5.1 · CLI Sem Dependências · Node.js 18+',
+      hero_badge: 'v0.6.1 · CLI Sem Dependências · Node.js 18+',
       hero_title: 'Inteligência de terminal e continuidade de contexto para agentes de código.',
       hero_subtitle: 'O Weave condensa saídas repetitivas de terminal em até <strong>96,4%</strong>, evita releituras redundantes de arquivos e sincroniza a memória de trabalho entre Claude Code, OpenAI Codex e Antigravity CLI. Node.js nativo com 100% de integridade em falhas.',
       copy_btn: 'Copiar',
@@ -210,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
       badge_audit: 'Auditoria',
       badge_policy: 'Política',
       badge_analysis: 'Análise',
+      badge_prompt: 'SuperPrompt',
 
       cmd_syntax_label: 'Sintaxe:',
       cmd_example_label: 'Exemplo Real:',
@@ -217,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cmd_doctor_desc: 'Verifica versão do Node.js (>=18), executável bash, integridade dos manifestos e permissões de escrita.',
       cmd_exec_desc: 'Executa comandos no terminal aplicando filtros conservadores. Preserva saídas com erro, diagnósticos e stack traces 100% na íntegra.',
       cmd_memory_desc: 'Salva, restaura, lista e gerencia snapshots nomeados de `.weave/state.md` em `.weave/memories/` para continuidade entre sessões.',
+      cmd_prompt_desc: 'Compila um SuperPrompt XML estruturado com contrato de requisição, memória operacional de 5 pilares, passos de raciocínio limitados, reflexão, pontuação de recompensa e 6 perguntas de fidelidade.',
       cmd_gain_desc: 'Calcula a redução total de bytes e a estimativa de tokens poupados em todas as execuções salvas em `.weave/runs/`.',
       cmd_recall_desc: 'Imprime a saída bruta completa de uma execução anterior pelo seu ID de 12 caracteres, com sanitização de credenciais.',
       cmd_mode_desc: 'Exibe ou atualiza a política ativa de engenharia em `.weave/mode`: `off`, `lite`, `full` ou `ultra`.',
@@ -255,6 +265,12 @@ document.addEventListener('DOMContentLoaded', () => {
       rel_desc: 'Acompanhe novas funcionalidades, correções de bugs e melhorias a cada versão do Weave.',
 
       rel_latest_tag: 'Versão Mais Recente',
+      rel_061_title: 'Motor de Meta-Prompting Weave SuperPrompt & Protocolo de Raciocínio',
+      rel_061_item1: 'Motor SuperPrompt: Compila meta-prompts em XML estruturado com contratos de requisição, memória operacional de 5 pilares, orçamento de passos, reflexão, pontuação de recompensa (0.0-1.0) e backtracking.',
+      rel_061_item2: 'Novo comando CLI e Tool MCP weave prompt: Suporte completo em linha de comando e via stdio JSON-RPC com validação decimal estrita de orçamento e terminação de opções (--).',
+      rel_061_item3: 'Nova Skill weave-prompt: Especializada para contratos de tarefas portáveis, delegação entre agentes autônomos e handoffs entre sessões.',
+      rel_061_item4: 'Sanitização XML 1.0 Rigorosa: Remove bytes de controle e NUL enquanto normaliza substitutos isolados, comprovado por 159 testes aprovados.',
+
       rel_051_title: 'Snapshots de Memória, Redação de Segredos e Blindagem de Hooks',
       rel_051_item1: 'Adicionado comando weave memory: Gerenciamento completo de snapshots (save, load, list, show, delete) com proteção contra symlinks e path traversal.',
       rel_051_item2: 'Redação de Segredos Reforçada: Sanitização por regex de tokens JWT iniciando com eyJ mesmo sem prefixo Bearer.',

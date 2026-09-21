@@ -12,7 +12,7 @@ Política mínima de engenharia, inteligência de terminal, continuidade de cont
 [![npm version](https://img.shields.io/npm/v/weave-agent-workflow.svg)](https://www.npmjs.com/package/weave-agent-workflow)
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/runtime_dependencies-0-111111)
-![Version](https://img.shields.io/badge/version-0.5.1-2563eb)
+![Version](https://img.shields.io/badge/version-0.6.1-2563eb)
 
 
 </div>
@@ -77,11 +77,12 @@ flowchart TD
 | Recuperação | Guarda capturas completas redigidas em `.weave/runs/` |
 | Continuidade de contexto | Orienta agentes a manter um contrato de pedido e memória de trabalho compactos em `.weave/state.md` |
 | Snapshots de contexto | `weave memory` salva, restaura, lista e inspeciona snapshots de memória nomeados em `.weave/memories/` |
+| Meta-prompting SuperPrompt | `weave prompt` compila contratos XML estruturados com orçamento de passos finito, reflexão, pontuação de recompensa e checagem de fidelidade de 6 perguntas |
 | Prevenção de leitura redundante | `hooks/preread.js` monitora leituras e buscas em `.weave/ledger.json`, alertando sobre releituras sem alterações |
 | Redação de segredos | Remove automaticamente tokens de API, chaves privadas, URLs de banco e cabeçalhos Bearer dos logs gravados |
-| Operações focadas | Fornece skills de review, auditoria de repositório, débito, ganho e ajuda |
+| Operações focadas | Fornece skills de review, auditoria de repositório, débito, ganho, ajuda e SuperPrompt |
 | Arquivos de regra multi-agente | Gera o mesmo texto de política pro Cursor, Cline, Windsurf, e qualquer agente que leia `AGENTS.md` |
-| Servidor MCP | Serve `get_policy`, `gain` e `discover` via stdio JSON-RPC pra clientes com capacidade MCP sem integração nativa de plugin |
+| Servidor MCP | Serve política, ganho, discover, gestão de memória e geração de SuperPrompts via stdio JSON-RPC |
 | Análise retrospectiva | `weave discover` estima a redução perdida em sessões passadas que rodaram fora do wrapper |
 
 ## Arquitetura
@@ -445,6 +446,7 @@ Versionar `.weave/state.md` é uma escolha por projeto: versione quando o time c
 | Skill | Propósito |
 | --- | --- |
 | `weave` | Workflow principal, validação, contexto e handoff |
+| `weave-prompt` | Gera SuperPrompts XML autocontidos com contrato de requisição, memória de 5 pilares e raciocínio orçado |
 | `weave-review` | Revisa o diff atual em busca de complexidade removível |
 | `weave-audit` | Audita o repositório em busca de simplificações confirmadas |
 | `weave-debt` | Coleta marcadores explícitos de débito `weave:` |

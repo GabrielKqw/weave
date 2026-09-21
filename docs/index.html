@@ -15,7 +15,7 @@
       <a href="#" class="brand">
         <img src="mark.svg" alt="Weave Logo" class="brand-logo" width="32" height="32" />
         <span class="brand-name">Weave</span>
-        <span class="version-tag">v0.5.1</span>
+        <span class="version-tag">v0.6.1</span>
       </a>
       <nav class="nav-links">
         <a href="#workflow" data-i18n="nav_workflow">How to Use</a>
@@ -46,7 +46,7 @@
     <section class="hero-section">
       <div class="container hero-container">
         <div class="hero-badge">
-          <span data-i18n="hero_badge">v0.5.1 · Zero-Dependency CLI · Node.js 18+</span>
+          <span data-i18n="hero_badge">v0.6.1 · Zero-Dependency CLI · Node.js 18+</span>
         </div>
         <h1 class="hero-title" data-i18n="hero_title">
           Terminal intelligence and context continuity for coding agents.
@@ -87,7 +87,7 @@
             <span class="metric-label" data-i18n="metric_integrity">Error & Failure Integrity</span>
           </div>
           <div class="metric-item">
-            <span class="metric-value">128/128</span>
+            <span class="metric-value">159/159</span>
             <span class="metric-label" data-i18n="metric_tests">Verified Test Suite</span>
           </div>
         </div>
@@ -466,6 +466,26 @@ Approx tokens saved: ~42,350 tokens</code></pre>
               <pre><code>node cli/weave.js discover</code></pre>
             </div>
           </div>
+
+          <!-- Command: prompt -->
+          <div class="cmd-card">
+            <div class="cmd-header">
+              <span class="cmd-name">weave prompt</span>
+              <span class="cmd-badge" data-i18n="badge_prompt">SuperPrompt</span>
+            </div>
+            <p class="cmd-desc" data-i18n="cmd_prompt_desc">
+              Compiles a structured XML SuperPrompt with request contract, 5-pillar operational memory, bounded reasoning steps, reflection, reward scores, and 6 fidelity questions.
+            </p>
+            <div class="cmd-syntax-label" data-i18n="cmd_syntax_label">Syntax:</div>
+            <div class="cmd-syntax">weave prompt [--mode=MODE] [--budget=N] [--state] [--memory=NAME] [--agent=NAME] [--raw] [--] [task...]</div>
+            <div class="cmd-example-block">
+              <div class="cmd-example-header">
+                <span data-i18n="cmd_example_label">Real Example:</span>
+                <button class="btn-copy-mini" data-copy="node cli/weave.js prompt --state --budget=10 &quot;Implement feature&quot;">Copy</button>
+              </div>
+              <pre><code>node cli/weave.js prompt --state --budget=10 "Implement feature"</code></pre>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -623,11 +643,27 @@ node scripts/generate-agent-rules.js
         </div>
 
         <div class="releases-timeline">
+          <!-- Release 0.6.1 -->
+          <div class="release-entry">
+            <div class="release-badge">
+              <span class="release-ver">v0.6.1</span>
+              <span class="release-tag latest" data-i18n="rel_latest_tag">Latest Release</span>
+            </div>
+            <div class="release-content">
+              <h3 class="release-title" data-i18n="rel_061_title">Weave SuperPrompt Meta-Prompting Engine &amp; Reasoning Protocol</h3>
+              <ul class="release-list">
+                <li data-i18n="rel_061_item1"><strong>SuperPrompt Engine:</strong> Compiles structured XML meta-prompts with request contracts, 5-pillar operational memory, step budgeting, reflection, quantitative reward scoring (0.0-1.0), and backtracking.</li>
+                <li data-i18n="rel_061_item2"><strong>New <code>weave prompt</code> CLI &amp; MCP Tool:</strong> Full command-line and stdio JSON-RPC tool support with strict decimal budget parsing and option termination (<code>--</code>).</li>
+                <li data-i18n="rel_061_item3"><strong>New <code>weave-prompt</code> Skill:</strong> Specialized for portable task contracts, autonomous agent delegation, and cross-session handoffs.</li>
+                <li data-i18n="rel_061_item4"><strong>Hardened XML 1.0 Legality:</strong> Sanitizes NUL and control bytes while normalizing lone surrogates, validated by 159 passing tests.</li>
+              </ul>
+            </div>
+          </div>
+
           <!-- Release 0.5.1 -->
           <div class="release-entry">
             <div class="release-badge">
               <span class="release-ver">v0.5.1</span>
-              <span class="release-tag latest" data-i18n="rel_latest_tag">Latest Release</span>
             </div>
             <div class="release-content">
               <h3 class="release-title" data-i18n="rel_051_title">Context Snapshots, Secret Redaction &amp; Hook Hardening</h3>

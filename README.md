@@ -12,7 +12,7 @@ Minimal engineering policy, terminal intelligence, context continuity, and verif
 [![npm version](https://img.shields.io/npm/v/weave-agent-workflow.svg)](https://www.npmjs.com/package/weave-agent-workflow)
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/runtime_dependencies-0-111111)
-![Version](https://img.shields.io/badge/version-0.5.1-2563eb)
+![Version](https://img.shields.io/badge/version-0.6.1-2563eb)
 
 
 </div>
@@ -77,11 +77,12 @@ flowchart TD
 | Recovery | Stores redacted complete captures under `.weave/runs/` |
 | Context continuity | Guides agents to maintain a compact request contract and working memory in `.weave/state.md` |
 | Context snapshots | `weave memory` saves, loads, lists, and inspects named memory snapshots under `.weave/memories/` |
+| SuperPrompt engine | `weave prompt` compiles XML meta-prompts with request contracts, 5-pillar operational memory, step budgeting, reflection, reward scoring, and fidelity checks |
 | Redundant read prevention | `hooks/preread.js` tracks file reads and searches in `.weave/ledger.json`, warning on unchanged re-reads |
 | Secret redaction | Automatically scrubs API tokens, private keys, database URLs, and Bearer headers from stored captures |
-| Focused operations | Provides review, repository audit, debt, gain, and help skills |
+| Focused operations | Provides review, repository audit, debt, gain, help, and SuperPrompt skills |
 | Multi-agent rule files | Generates the same policy text for Cursor, Cline, Windsurf, and any `AGENTS.md`-reading agent |
-| MCP server | Serves policy, gain, and discover over stdio JSON-RPC for MCP-capable clients without a native plugin integration |
+| MCP server | Serves policy, gain, discover, memory management, and SuperPrompt generation over stdio JSON-RPC |
 | Retrospective analysis | `weave discover` estimates reduction missed in past sessions that ran outside the wrapper |
 
 ## Architecture
@@ -445,6 +446,7 @@ Whether to commit `.weave/state.md` is a per-project choice: commit it when the 
 | Skill | Purpose |
 | --- | --- |
 | `weave` | Main workflow, validation, context, and handoff |
+| `weave-prompt` | Generates self-contained XML SuperPrompts with request contracts, 5-pillar memory, and budgeted reasoning |
 | `weave-review` | Reviews the current diff for removable complexity |
 | `weave-audit` | Audits the repository for confirmed simplifications |
 | `weave-debt` | Collects explicit `weave:` debt markers |
