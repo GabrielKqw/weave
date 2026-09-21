@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0
+
+- Added Weave SuperPrompt meta-prompting engine (`core/prompt.js`) with structured XML schema (`<weave_superprompt>`), request contract serialization, 5-pillar operational memory extraction, finite step budgeting (`<step>`), quantitative reward scoring (`<reward>`), and automated backtracking (`<backtrack>`).
+- Added `weave prompt` CLI command with strict argument validation, option termination (`--`), decimal budget parsing, and support for `--mode`, `--budget`, `--state`, `--memory`, `--agent`, `--raw`, and `--cwd`.
+- Added `prompt` tool to Weave MCP server (`mcp/server.js`) with runtime type checking and validation.
+- Added `weave-prompt` skill (`skills/weave-prompt/SKILL.md`) for autonomous agent delegation and cross-session handoffs.
+- Added 5-Pillar Operational Memory management (`weave memory save/load/list/show/delete`) and MCP tools.
+- Hardened XML 1.0 character legality, stripping invalid control characters, NUL bytes, and normalizing lone surrogates.
+
 ## 0.5.1
 
 - Fixed a `ReferenceError` in `hooks/pretooluse.js` that crashed on every Bash tool call, silently disabling terminal-output reduction in Claude Code (the outer try/catch swallowed the crash). Confirmed live with a real Codex CLI session on Windows.
