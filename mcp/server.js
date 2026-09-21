@@ -79,7 +79,7 @@ const TOOLS = [
   {
     name: 'prompt',
     description:
-      'Generate a Weave SuperPrompt: an XML request contract, 5-pillar operational memory, budgeted step-by-step reasoning protocol, and the 6-question fidelity gate.',
+      'Generate a structured Weave SuperPrompt: request contract, 5-pillar operational memory, budgeted reasoning protocol, and the 6-question fidelity gate. Emits clean Markdown text by default, or XML when xml: true.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -90,6 +90,7 @@ const TOOLS = [
         memory_name: { type: 'string' },
         agent: { type: 'string' },
         raw: { type: 'boolean' },
+        xml: { type: 'boolean' },
         cwd: { type: 'string' },
       },
     },
@@ -196,6 +197,9 @@ function callTool(name, args = {}) {
       if (args.raw !== undefined && typeof args.raw !== 'boolean') {
         throw new Error('invalid raw: must be a boolean');
       }
+      if (args.xml !== undefined && typeof args.xml !== 'boolean') {
+        throw new Error('invalid xml: must be a boolean');
+      }
       return text(
         prompt.buildSuperPrompt({
           task: args.task,
@@ -205,6 +209,7 @@ function callTool(name, args = {}) {
           memory: args.memory_name,
           agent: args.agent,
           raw: Boolean(args.raw),
+          xml: Boolean(args.xml),
           cwd,
         })
       );

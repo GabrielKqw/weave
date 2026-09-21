@@ -101,45 +101,82 @@ const FIDELITY_QUESTIONS = [
   "Does every claim I'm about to make have real evidence behind it (a command's actual output, a test that actually ran) rather than an assumption that it would work?",
 ];
 
-function buildSuperPrompt(options = {}) {
-  const cwd = options.cwd || process.cwd();
-  const mode = options.mode || modes.readMode(cwd);
-  if (!modes.MODES.has(mode)) throw new Error(`invalid mode: ${mode}`);
+function buildSuperPromptText(options, contract, goal, mode, budget, agent) {
+  const lines = [
+    '# WEAVE SUPERPROMPT',
+    `Agent: ${agent} | Mode: ${mode} | Reasoning Budget: ${budget} steps`,
+    '',
+    '## Interaction Protocol & Directives',
+    '- Communicate directly with the human developer in clear, logical, structured Markdown prose.',
+    '- Do NOT reply inside XML tags, and do not repeat raw template markup back to the user.',
+    '- If any requirement, constraint, or architectural decision is ambiguous, underspecified, or in doubt, PAUSE and ask the user clarifying questions before making assumptions or modifying code.',
+    '- The reasoning steps, budget, and fidelity gate are operational execution disciplines for you to follow, not markup to dump into the chat.',
+    '',
+    '## Request Contract',
+    `- Goal: ${goal}`,
+    `- Constraints: ${contract.constraints || 'None recorded.'}`,
+    '- Invariants:',
+    ...modes.instructions(mode).split(/\r?\n/).map((l) => `  ${l}`),
+    `- Anti-scope (Not requested): ${contract.antiScope || 'None recorded.'}`,
+    `- Completion criteria: ${contract.criteria || 'Not specified - define a concrete, verifiable check before finishing.'}`,
+    '',
+    '## Operational Memory (5 Pillars)',
+    `- Execution flow: ${contract.flow || 'Not yet traced.'}`,
+    `- Business rules: ${contract.rules || 'None recorded.'}`,
+    `- Defect root cause: ${contract.rootCause || 'None recorded.'}`,
+    `- Schema contract: ${contract.schema || 'None recorded.'}`,
+    `- Verification gaps: ${contract.gaps || 'None recorded.'}`,
+    '',
+    `## Reasoning Engine (Total Budget: ${budget} steps)`,
+    `Work in discrete steps; each step spends one unit from total_budget="${budget}".`,
+    'For each step:',
+    '1. Action & Hypothesis: What you are about to do, why it is needed, and what you expect to observe.',
+    '2. Evidence: The actual command output, file content, or test result observed.',
+    '3. Reflection: Whether the evidence matched the hypothesis, and what it changes about the plan.',
+    '4. Reward & Backtrack: Score progress from 0.0 to 1.0. If reward is low or evidence contradicts the hypothesis, backtrack and revise the plan.',
+    '5. Budget discipline: Stop before exceeding the budget. If the goal is not reached in time or if user clarification is required, report the status honestly instead of fabricating completion.',
+    '',
+    '## Fidelity Gate (6 Verification Questions)',
+    'Before declaring this task done, honestly answer every question against real evidence:',
+    ...FIDELITY_QUESTIONS.map((q, i) => `${i + 1}. ${q}`),
+    '',
+    '## Expected Output Format',
+    '- Present your response, plan, and explanations in clear, logical Markdown text (zero XML tags).',
+    '- If requirements are ambiguous, contradictory, or in doubt, ask the user directly before proceeding.',
+    '- Unified diff or precise file-by-file summary of changes made (no unrelated formatting changes).',
+    '- Exact verification commands run with their real terminal output.',
+    '- Concrete proof for each completion criterion.',
+    `- If .weave/state.md exists for this task, the Working memory, Verification, and Fidelity check sections to write back.`,
+  ];
 
-  const budget = options.budget === undefined ? 10 : options.budget;
-  if (!Number.isInteger(budget) || budget < 1 || budget > 50) {
-    throw new Error(`invalid budget: ${options.budget} (expected an integer between 1 and 50)`);
-  }
+  const text = lines.join('\n');
+  return options.raw ? text.replace(/\n{3,}/g, '\n\n').trim() : text;
+}
 
-  const agent = options.agent || 'unspecified';
-  const task = options.task || '';
+function buildSuperPromptXml(options, contract, goal, mode, budget, agent) {
+  const interactionDirectives =
+    'Communicate directly with the human developer in clear, logical, structured prose (Markdown). ' +
+    'Do NOT reply inside XML tags or echo this SuperPrompt template back to the user. ' +
+    'If any requirement, constraint, or architectural decision is ambiguous, underspecified, or in doubt, ' +
+    'pause and ask the user clarifying questions before making assumptions or modifying code. ' +
+    'The reasoning steps, budget, and fidelity gate are operational execution disciplines for you to follow, ' +
+    'not raw markup to dump into the chat.';
 
-  let contract = {
-    goal: '', constraints: '', antiScope: '', criteria: '',
-    flow: '', rules: '', rootCause: '', schema: '', gaps: '',
-  };
-
-  if (options.state) {
-    const statePath = path.join(cwd, '.weave', 'state.md');
-    if (fs.existsSync(statePath)) {
-      Object.assign(contract, parseStateMarkdown(fs.readFileSync(statePath, 'utf8')));
-    }
-  }
-
-  if (options.memory) {
-    Object.assign(contract, parseMemoryMarkdown(memory.showMemory(cwd, options.memory)));
-  }
-
-  const goal = task || contract.goal || 'Not specified - derive from the task below.';
   const stepInstructions =
     `Work in discrete steps; each step spends one unit from total_budget="${budget}". State a hypothesis before ` +
     'acting, record real evidence after, and reflect on whether the evidence matched. Score progress with a reward ' +
     'from 0.0 (no progress) to 1.0 (goal fully advanced). When reward is low or evidence contradicts the hypothesis, ' +
     'emit a backtrack and revise the plan instead of continuing down a failing path. Stop before exceeding the ' +
-    'budget - if the goal is not reached in time, report the remaining gap honestly instead of fabricating completion.';
+    'budget - if the goal is not reached in time or if user clarification is required, report the status honestly ' +
+    'instead of fabricating completion.';
 
   const lines = [
     `<weave_superprompt version="1.0" mode="${escapeXml(mode)}" agent="${escapeXml(agent)}" budget="${budget}">`,
+    '  <interaction_protocol>',
+    `    <directives>${escapeXml(interactionDirectives)}</directives>`,
+    '    <response_style>Clear, logical, structured Markdown text. Never respond inside raw XML tags.</response_style>',
+    '    <user_clarification>Proactively ask the user whenever requirements, edge cases, or design options are ambiguous or missing.</user_clarification>',
+    '  </interaction_protocol>',
     '  <request_contract>',
     `    <goal>${escapeXml(goal)}</goal>`,
     `    <constraints>${escapeXml(contract.constraints || 'None recorded.')}</constraints>`,
@@ -172,6 +209,8 @@ function buildSuperPrompt(options = {}) {
     ...FIDELITY_QUESTIONS.map((q, i) => `    <question id="${i + 1}">${escapeXml(q)}</question>`),
     '  </fidelity_gate>',
     '  <output_format>',
+    `    <presentation>${escapeXml('Present your answers, explanations, and plans in clear, logical Markdown text. Do NOT emit XML tags in your response.')}</presentation>`,
+    `    <clarification_gate>${escapeXml('If requirements are ambiguous, contradictory, or in doubt, ask the user directly before proceeding.')}</clarification_gate>`,
     `    <diff>${escapeXml('Unified diff or precise file-by-file summary of the exact changes made - no unrelated reformatting.')}</diff>`,
     `    <verification_command>${escapeXml('The exact command(s) run to prove the change works, with their real output.')}</verification_command>`,
     `    <evidence>${escapeXml('Concrete proof for each completion criterion - actual test output, command result, or manual repro steps performed.')}</evidence>`,
@@ -182,6 +221,44 @@ function buildSuperPrompt(options = {}) {
 
   const xml = lines.join('\n');
   return options.raw ? xml.replace(/>\s+</g, '><').trim() : xml;
+}
+
+function buildSuperPrompt(options = {}) {
+  const cwd = options.cwd || process.cwd();
+  const mode = options.mode || modes.readMode(cwd);
+  if (!modes.MODES.has(mode)) throw new Error(`invalid mode: ${mode}`);
+
+  const budget = options.budget === undefined ? 10 : options.budget;
+  if (!Number.isInteger(budget) || budget < 1 || budget > 50) {
+    throw new Error(`invalid budget: ${options.budget} (expected an integer between 1 and 50)`);
+  }
+
+  const agent = options.agent || 'unspecified';
+  const task = options.task || '';
+
+  let contract = {
+    goal: '', constraints: '', antiScope: '', criteria: '',
+    flow: '', rules: '', rootCause: '', schema: '', gaps: '',
+  };
+
+  if (options.state) {
+    const statePath = path.join(cwd, '.weave', 'state.md');
+    if (fs.existsSync(statePath)) {
+      Object.assign(contract, parseStateMarkdown(fs.readFileSync(statePath, 'utf8')));
+    }
+  }
+
+  if (options.memory) {
+    Object.assign(contract, parseMemoryMarkdown(memory.showMemory(cwd, options.memory)));
+  }
+
+  const goal = task || contract.goal || 'Not specified - derive from the task below.';
+
+  if (options.xml) {
+    return buildSuperPromptXml(options, contract, goal, mode, budget, agent);
+  }
+
+  return buildSuperPromptText(options, contract, goal, mode, budget, agent);
 }
 
 module.exports = { escapeXml, parseStateMarkdown, parseMemoryMarkdown, buildSuperPrompt };

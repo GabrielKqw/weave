@@ -186,6 +186,25 @@ appears 116 times"). A census can always be regenerated with `find` or
 search can't hand back on its own: what the code actually does, why it
 breaks, and what's still unverified.
 
+**Self-Contained Cross-Agent Handoff.** Every memory must explain both the
+*why* and the *how* with enough context for another agent in a fresh session
+to continue without prior chat history or re-asking the user. State the
+operational rationale, relevant flow, decisions or invariants, and the next
+action or verification condition when they matter; do not rely on cryptic
+shorthand or unstated context.
+
+**Reusable Procedures vs. Incidental Troubleshooting.** When recording a
+workflow, setup step, or testing practice, preserve the reusable procedure:
+the ordered steps, inputs or preconditions, expected outcome, and applicable
+contract. Do not save ephemeral debugging logs, raw incident output, or
+one-off symptoms unless they establish a durable root cause or reusable
+failure mode.
+
+**Clarity Over Artificial Brevity.** Remove noise by omitting shallow
+inventories and raw logs, not by cutting essential explanation, design
+rationale, or step-by-step guidance. Keep memories concise only when their
+meaning and execution context remain complete.
+
 Every entry you save — here or via `weave memory save` (see section 7)
 — must fit one of the five Operational Memory Pillars:
 
@@ -404,11 +423,16 @@ Rules:
   data into this file — it's meant to be readable and, in most projects,
   committable.
 - Working memory and any `weave memory save` entry must follow the
-  Operational Memory Standards defined in section 3: no shallow census
-  (file counts, line counts, table/column frequency tallies, bare
-  filename lists) — record execution flow, business rules and
-  invariants, failure modes/root causes/error codes, integration
-  contracts and schema mappings, and test/verification gaps instead.
+  Operational Memory Standards defined in section 3. They must be
+  self-contained and actionable for a fresh cross-agent handoff: explain the
+  why and how, including reusable procedures, ordered steps, and applicable
+  contracts where relevant, so the next agent need not reconstruct prior
+  chat context or re-ask the user. Remove shallow censuses (file counts, line
+  counts, table/column frequency tallies, bare filename lists) and raw
+  incident logs, but retain essential explanations, design rationale, and
+  step-by-step guidance. Record execution flow, business rules and
+  invariants, failure modes/root causes/error codes, integration contracts
+  and schema mappings, and test/verification gaps instead.
 - Whether `.weave/state.md` is committed or gitignored is a per-project
   choice — see the README for the tradeoff. Don't decide this silently;
   if the project has no existing convention, ask or leave it untracked by

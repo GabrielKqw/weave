@@ -96,8 +96,20 @@ test('escapeXml strips characters forbidden by XML 1.0 (NUL, control chars, unpa
   assert.match(escaped, /cleantextwithcontrol\uFFFDsurrogateend/);
 });
 
-test('buildSuperPrompt produces well-formed XML with the expected structure', () => {
-  const xml = promptCore.buildSuperPrompt({ task: 'fix the bug', mode: 'full', budget: 7, cwd: tmpCwd() });
+test('buildSuperPrompt produces clean Markdown text by default without XML tags', () => {
+  const text = promptCore.buildSuperPrompt({ task: 'fix the bug', mode: 'full', budget: 7, cwd: tmpCwd() });
+  assert.match(text, /# WEAVE SUPERPROMPT/);
+  assert.match(text, /Goal: fix the bug/);
+  assert.match(text, /Reasoning Budget: 7 steps/);
+  assert.match(text, /## Interaction Protocol & Directives/);
+  assert.match(text, /PAUSE and ask the user clarifying questions/);
+  assert.match(text, /## Fidelity Gate/);
+  assert.equal(text.includes('<weave_superprompt'), false);
+  assert.equal(text.includes('<request_contract>'), false);
+});
+
+test('buildSuperPrompt with xml: true produces well-formed XML with expected structure', () => {
+  const xml = promptCore.buildSuperPrompt({ task: 'fix the bug', mode: 'full', budget: 7, xml: true, cwd: tmpCwd() });
   assertWellFormedXml(xml);
   assert.match(xml, /<weave_superprompt version="1\.0" mode="full" agent="unspecified" budget="7">/);
   assert.match(xml, /<goal>fix the bug<\/goal>/);
@@ -105,16 +117,19 @@ test('buildSuperPrompt produces well-formed XML with the expected structure', ()
   assert.match(xml, /<fidelity_gate status="pending">/);
   assert.match(xml, /<question id="6">/);
   assert.match(xml, /<output_format>/);
+  assert.match(xml, /<interaction_protocol>/);
+  assert.match(xml, /Do NOT reply inside XML tags/);
+  assert.match(xml, /pause and ask the user clarifying questions/);
 });
 
-test('buildSuperPrompt escapes unsafe characters embedded in the task', () => {
-  const xml = promptCore.buildSuperPrompt({ task: `fix <script>&"'`, cwd: tmpCwd() });
+test('buildSuperPrompt escapes unsafe characters in XML mode', () => {
+  const xml = promptCore.buildSuperPrompt({ task: `fix <script>&"'`, xml: true, cwd: tmpCwd() });
   assertWellFormedXml(xml);
   assert.match(xml, /<goal>fix &lt;script&gt;&amp;&quot;&apos;<\/goal>/);
 });
 
-test('buildSuperPrompt cleans NUL and control characters from task into valid XML', () => {
-  const xml = promptCore.buildSuperPrompt({ task: 'fix\u0000the\u0007bug\uFFFF', cwd: tmpCwd() });
+test('buildSuperPrompt cleans NUL and control characters in XML mode into valid XML', () => {
+  const xml = promptCore.buildSuperPrompt({ task: 'fix\u0000the\u0007bug\uFFFF', xml: true, cwd: tmpCwd() });
   assertWellFormedXml(xml);
   assert.match(xml, /<goal>fixthebug<\/goal>/);
 });
@@ -192,7 +207,11 @@ test('buildSuperPrompt with --state ingests .weave/state.md', () => {
     ['## Goal', 'Repair the pipeline.', '', '## Working memory', '- root cause: defect in the retry logic'].join('\n')
   );
 
-  const xml = promptCore.buildSuperPrompt({ state: true, cwd });
+  const text = promptCore.buildSuperPrompt({ state: true, cwd });
+  assert.match(text, /Goal: Repair the pipeline\./);
+  assert.match(text, /Defect root cause:.*root cause: defect in the retry logic/);
+
+  const xml = promptCore.buildSuperPrompt({ state: true, xml: true, cwd });
   assertWellFormedXml(xml);
   assert.match(xml, /<goal>Repair the pipeline\.<\/goal>/);
   assert.match(xml, /<defect_root_cause>.*root cause: defect in the retry logic.*<\/defect_root_cause>/);
@@ -207,25 +226,39 @@ test('buildSuperPrompt with --memory ingests a saved memory snapshot', () => {
   );
   memory.saveMemory(cwd, 'checkpoint');
 
-  const xml = promptCore.buildSuperPrompt({ task: 'continue the migration', memory: 'checkpoint', cwd });
+  const text = promptCore.buildSuperPrompt({ task: 'continue the migration', memory: 'checkpoint', cwd });
+  assert.match(text, /Goal: continue the migration/);
+  assert.match(text, /Schema contract:.*order table key maps to order_id/);
+
+  const xml = promptCore.buildSuperPrompt({ task: 'continue the migration', memory: 'checkpoint', xml: true, cwd });
   assertWellFormedXml(xml);
   assert.match(xml, /<goal>continue the migration<\/goal>/);
   assert.match(xml, /<schema_contract>.*order table key maps to order_id.*<\/schema_contract>/);
 });
 
-test('CLI: weave prompt "task" exits 0 and prints well-formed XML', (t) => {
+test('CLI: weave prompt "task" exits 0 and prints clean Markdown text by default', (t) => {
   const cwd = tmpCwd();
   t.after(() => fs.rmSync(cwd, { recursive: true, force: true }));
   const res = runCli(['prompt', 'my task'], cwd);
+  assert.equal(res.status, 0);
+  assert.match(res.stdout, /# WEAVE SUPERPROMPT/);
+  assert.match(res.stdout, /Goal: my task/);
+  assert.equal(res.stdout.includes('<weave_superprompt'), false);
+});
+
+test('CLI: weave prompt --xml "task" exits 0 and prints well-formed XML', (t) => {
+  const cwd = tmpCwd();
+  t.after(() => fs.rmSync(cwd, { recursive: true, force: true }));
+  const res = runCli(['prompt', '--xml', 'my task'], cwd);
   assert.equal(res.status, 0);
   assertWellFormedXml(res.stdout);
   assert.match(res.stdout, /<goal>my task<\/goal>/);
 });
 
-test('CLI: weave prompt --budget=5 --raw collapses structural inter-tag whitespace', (t) => {
+test('CLI: weave prompt --xml --budget=5 --raw collapses structural inter-tag whitespace', (t) => {
   const cwd = tmpCwd();
   t.after(() => fs.rmSync(cwd, { recursive: true, force: true }));
-  const res = runCli(['prompt', '--budget=5', '--raw', 'raw task'], cwd);
+  const res = runCli(['prompt', '--xml', '--budget=5', '--raw', 'raw task'], cwd);
   assert.equal(res.status, 0);
   assert.match(res.stdout, /budget="5"/);
   // Structural indentation between tags is gone (text content, e.g. <invariants>,
@@ -276,8 +309,7 @@ test('CLI: weave prompt supports "--" option terminator for literal flags in tas
   t.after(() => fs.rmSync(cwd, { recursive: true, force: true }));
   const res = runCli(['prompt', '--state', '--', '--flag-in-task', 'fix bug'], cwd);
   assert.equal(res.status, 0);
-  assertWellFormedXml(res.stdout);
-  assert.match(res.stdout, /<goal>--flag-in-task fix bug<\/goal>/);
+  assert.match(res.stdout, /Goal: --flag-in-task fix bug/);
 });
 
 test('CLI: weave prompt --help prints usage and exits 0', (t) => {
@@ -297,7 +329,11 @@ test('buildSuperPrompt task overrides state goal but preserves state memory pill
     ['## Goal', 'Original state goal', '## Working memory', '- rule: order total must be positive'].join('\n')
   );
 
-  const xml = promptCore.buildSuperPrompt({ task: 'Overridden task goal', state: true, cwd });
+  const text = promptCore.buildSuperPrompt({ task: 'Overridden task goal', state: true, cwd });
+  assert.match(text, /Goal: Overridden task goal/);
+  assert.match(text, /Business rules:.*order total must be positive/);
+
+  const xml = promptCore.buildSuperPrompt({ task: 'Overridden task goal', state: true, xml: true, cwd });
   assertWellFormedXml(xml);
   assert.match(xml, /<goal>Overridden task goal<\/goal>/);
   assert.match(xml, /<business_rules>.*order total must be positive.*<\/business_rules>/);
@@ -312,7 +348,7 @@ test('mcp server: tools/list exposes prompt', async () => {
   });
 });
 
-test('mcp server: tools/call prompt executes cleanly and returns well-formed XML', async () => {
+test('mcp server: tools/call prompt executes cleanly and returns clean Markdown text', async () => {
   await withServer(async ({ send, nextResponse }) => {
     send({
       jsonrpc: '2.0',
@@ -323,9 +359,27 @@ test('mcp server: tools/call prompt executes cleanly and returns well-formed XML
     const res = await nextResponse();
     assert.ok(res.result, `expected a result, got error: ${JSON.stringify(res.error)}`);
     const text = res.result.content[0].text;
-    assertWellFormedXml(text);
-    assert.match(text, /<goal>mcp task<\/goal>/);
-    assert.match(text, /total_budget="3"/);
+    assert.match(text, /# WEAVE SUPERPROMPT/);
+    assert.match(text, /Goal: mcp task/);
+    assert.match(text, /Reasoning Budget: 3 steps/);
+    assert.equal(text.includes('<weave_superprompt'), false);
+  });
+});
+
+test('mcp server: tools/call prompt with xml: true returns well-formed XML', async () => {
+  await withServer(async ({ send, nextResponse }) => {
+    send({
+      jsonrpc: '2.0',
+      id: 3,
+      method: 'tools/call',
+      params: { name: 'prompt', arguments: { task: 'mcp task', budget: 3, xml: true } },
+    });
+    const res = await nextResponse();
+    assert.ok(res.result, `expected a result, got error: ${JSON.stringify(res.error)}`);
+    const xml = res.result.content[0].text;
+    assertWellFormedXml(xml);
+    assert.match(xml, /<goal>mcp task<\/goal>/);
+    assert.match(xml, /total_budget="3"/);
   });
 });
 

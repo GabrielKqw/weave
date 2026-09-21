@@ -397,7 +397,7 @@ function cmdPrompt(argv) {
       continue;
     }
     if (arg === '--help' || arg === '-h') {
-      process.stdout.write('Usage: weave prompt [--mode=off|lite|full|ultra] [--budget=N] [--state] [--memory=NAME] [--agent=NAME] [--raw] [--cwd=DIR] [--] [task...]\n');
+      process.stdout.write('Usage: weave prompt [--mode=off|lite|full|ultra] [--budget=N] [--state] [--memory=NAME] [--agent=NAME] [--xml] [--raw] [--cwd=DIR] [--] [task...]\n');
       process.exitCode = 0;
       return;
     }
@@ -405,6 +405,8 @@ function cmdPrompt(argv) {
       options.state = true;
     } else if (arg === '--raw') {
       options.raw = true;
+    } else if (arg === '--xml') {
+      options.xml = true;
     } else if (arg.startsWith('--mode=')) {
       options.mode = arg.slice(7);
     } else if (arg.startsWith('--budget=')) {

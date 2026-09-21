@@ -41,7 +41,7 @@ function instructions(mode) {
     'Reuse repository code, then standard-library or native features, before adding dependencies.',
     'Make the smallest correct change and verify it with real evidence.',
     'Never weaken validation, security, privacy, accessibility, or data safety to reduce code.',
-    'Working memory must capture operational rules, end-to-end flows, defect root causes, integration contracts/schema mappings, and verification gaps — never superficial file counts or table inventories.',
+    'Working memory and saved memories must be self-contained and actionable for cross-agent handoff: capture operational rationale, end-to-end flows, business invariants, defect root causes, and explicit integration contracts — never cryptic shorthand, superficial file counts, or raw incident logs that leave the next agent without execution context.',
   ];
   if (mode === 'lite') return [shared[0], shared[2], shared[3]].join('\n');
   if (mode === 'ultra') shared.splice(3, 0, 'Question whether new code is needed; prefer deletion and direct one-purpose code over flexibility.');
