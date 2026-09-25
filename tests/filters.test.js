@@ -26,6 +26,8 @@ test('classify() recognizes the initial command families', () => {
   assert.equal(filters.classify('docker compose build'), 'summary');
   assert.equal(filters.classify('docker logs api'), 'logs');
   assert.equal(filters.classify('ls -la'), 'listing');
+  assert.equal(filters.classify('Get-ChildItem -Path .'), 'listing');
+  assert.equal(filters.classify('gci'), 'listing');
   assert.equal(filters.classify('cat package.json'), 'passthrough');
   assert.equal(filters.classify('kubectl get pods -o json'), 'passthrough');
 });

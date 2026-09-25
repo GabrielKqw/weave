@@ -7,4 +7,4 @@ Make the smallest correct change and verify it with real evidence.
 Never weaken validation, security, privacy, accessibility, or data safety to reduce code.
 Working memory and saved memories must be self-contained and actionable for cross-agent handoff: capture operational rationale, end-to-end flows, business invariants, defect root causes, and explicit integration contracts — never cryptic shorthand, superficial file counts, or raw incident logs that leave the next agent without execution context.
 
-Switch modes only from Claude Code/Codex, where Weave is wired via hooks (`/weave off|lite|full|ultra`). This static file always reflects `full`.
+Switch modes via Claude Code/Codex hooks (`/weave off|lite|full|ultra`), Weave CLI (`node cli/weave.js mode <mode>`), or Weave MCP tools. This static file reflects `full`.

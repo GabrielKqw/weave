@@ -20,6 +20,19 @@ function output(event, text) {
 function main() {
   const raw = fs.readFileSync(0, 'utf8').replace(/^\uFEFF/, '');
   const input = raw ? JSON.parse(raw) : {};
+
+  // Antigravity (Google / Gemini) PreInvocation support
+  if (input.invocationNum !== undefined || (input.conversationId && !input.hook_event_name)) {
+    const cwd = (Array.isArray(input.workspacePaths) && input.workspacePaths[0]) || process.cwd();
+    const text = mode.instructions(mode.readMode(cwd));
+    process.stdout.write(JSON.stringify({
+      injectSteps: [
+        { ephemeralMessage: text }
+      ]
+    }));
+    return;
+  }
+
   const event = input.hook_event_name;
   if (!['SessionStart', 'SubagentStart', 'UserPromptSubmit'].includes(event)) return;
   const cwd = input.cwd || process.cwd();

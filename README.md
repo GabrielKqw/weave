@@ -12,7 +12,7 @@ Minimal engineering policy, terminal intelligence, context continuity, and verif
 [![npm version](https://img.shields.io/npm/v/weave-agent-workflow.svg)](https://www.npmjs.com/package/weave-agent-workflow)
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/runtime_dependencies-0-111111)
-![Version](https://img.shields.io/badge/version-0.6.2-2563eb)
+![Version](https://img.shields.io/badge/version-0.6.3-2563eb)
 
 
 </div>

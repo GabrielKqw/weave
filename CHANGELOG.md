@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.3
+
+- Fixed terminal-output interception for Antigravity CLI and Gemini models on Windows: added native PowerShell runner (`core/exec.js`), safe Base64 command wrapper (`--b64`), and Antigravity `run_command` hook support in `hooks/pretooluse.js`.
+- Added PowerShell cmdlets (`Get-ChildItem`, `gci`) to output classification in `core/filters.js`.
+- Updated agent detection in `cli/weave.js` to accurately recognize Antigravity via `ANTIGRAVITY_AGENT`, `ANTIGRAVITY_CONVERSATION_ID`, and `ANTIGRAVITY_APP_DATA_DIR`.
+- Enhanced `GEMINI.md` with explicit output and execution discipline guidelines to reduce model verbosity, restrict file read ranges, and guide Weave MCP tool usage.
+
+## 0.6.2
+
+- Enforced self-contained operational memory standards for cross-agent handoffs.
+- Anonymized local user and filesystem paths across test suite.
+
 ## 0.6.1
 
 - Release 0.6.1: Weave SuperPrompt meta-prompting engine, operational memory tools, strict XML escaping, and CLI prompt commands.

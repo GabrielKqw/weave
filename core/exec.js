@@ -3,7 +3,7 @@
 const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { shellQuoteSingle, toGitBashPath } = require('./quoting');
+const { shellQuoteSingle, shellQuotePowershell, toGitBashPath } = require('./quoting');
 const filters = require('./filters');
 const redact = require('./redact');
 const storage = require('./storage');
@@ -24,11 +24,17 @@ function bashExecutable() {
 }
 
 function isAlreadyWrapped(command) {
-  return String(command || '').trimStart().startsWith(SENTINEL);
+  const str = String(command || '').trimStart();
+  return (
+    str.startsWith(SENTINEL) ||
+    str.startsWith('$env:WEAVE_WRAPPED') ||
+    /^node\s+["']?.*?weave(?:\.js)?["']?\s+exec\b/i.test(str) ||
+    /^weave(?:\.js)?\s+exec\b/i.test(str)
+  );
 }
 
 function shouldWrap(toolInput) {
-  const command = toolInput && toolInput.command;
+  const command = toolInput && (toolInput.command || toolInput.CommandLine);
   if (!command || typeof command !== 'string') return false;
   if (toolInput.run_in_background) return false;
   if (isAlreadyWrapped(command)) return false;
@@ -36,14 +42,31 @@ function shouldWrap(toolInput) {
   return true;
 }
 
-function buildWrappedCommand(originalCommand, weaveJsPath, cwd) {
+function buildWrappedCommand(originalCommand, weaveJsPath, cwd, { shell = 'bash' } = {}) {
+  if (shell === 'powershell') {
+    const cwdArg = cwd ? `--cwd ${shellQuotePowershell(cwd)} ` : '';
+    const b64 = Buffer.from(originalCommand, 'utf8').toString('base64');
+    return `$env:WEAVE_WRAPPED="1"; node ${shellQuotePowershell(weaveJsPath)} exec --shell powershell ${cwdArg}--b64 ${b64}`;
+  }
   const jsPath = toGitBashPath(weaveJsPath);
   const cwdArg = cwd ? `--cwd ${shellQuoteSingle(cwd)} ` : '';
   return `${SENTINEL} node ${shellQuoteSingle(jsPath)} exec ${cwdArg}-- ${shellQuoteSingle(originalCommand)}`;
 }
 
-function runCommand(command, { cwd } = {}) {
-  const result = spawnSync(bashExecutable(), ['-c', command], {
+function runCommand(command, { cwd, shell = 'bash' } = {}) {
+  const isPowershell = shell === 'powershell';
+  let binary, args;
+  if (isPowershell) {
+    binary = 'powershell.exe';
+    const b64 = Buffer.from(command, 'utf16le').toString('base64');
+    args = ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', b64];
+  } else {
+    binary = bashExecutable();
+    args = ['-c', command];
+  }
+  const shellName = isPowershell ? 'powershell' : 'bash';
+
+  const result = spawnSync(binary, args, {
     cwd: cwd || process.cwd(),
     maxBuffer: CAPTURE_CAP_BYTES,
     encoding: 'utf8',
@@ -53,7 +76,7 @@ function runCommand(command, { cwd } = {}) {
     const stdout = result.stdout || '';
     const stderr = result.stderr || '';
     if (stdout || stderr) {
-      const note = `weave: bash exited abnormally after partial capture: ${result.error.message}`;
+      const note = `weave: ${shellName} exited abnormally after partial capture: ${result.error.message}`;
       return {
         stdout,
         stderr: stderr ? `${stderr}\n${note}` : note,
@@ -62,7 +85,7 @@ function runCommand(command, { cwd } = {}) {
     }
     return {
       stdout: '',
-      stderr: `weave: failed to execute via bash: ${result.error.message}`,
+      stderr: `weave: failed to execute via ${shellName}: ${result.error.message}`,
       exitCode: 127,
     };
   }
@@ -124,9 +147,9 @@ function computeReport(command, stdout, stderr, exitCode) {
   };
 }
 
-function execAndReport(command, { cwd } = {}) {
+function execAndReport(command, { cwd, shell = 'bash' } = {}) {
   const workDir = cwd || process.cwd();
-  const run = runCommand(command, { cwd: workDir });
+  const run = runCommand(command, { cwd: workDir, shell });
   const report = computeReport(command, run.stdout, run.stderr, run.exitCode);
 
   const rawText = report.shouldPersistRaw

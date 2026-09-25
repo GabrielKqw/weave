@@ -90,7 +90,7 @@ function classify(command) {
   }
   if (/^(?:npm|pnpm|yarn|bun)\s+(?:i|install|add|outdated|list|ls)\b|^(?:pip|pip3)\s+install\b|^cargo\s+install\b/.test(c)) return 'summary';
   if (/^gh\s+(?:pr|run|issue)\s+\w+/.test(c)) return 'summary';
-  if (/^(?:ls|dir|tree|find|fd)\b/i.test(c)) return 'listing';
+  if (/^(?:ls|dir|tree|find|fd|Get-ChildItem|gci)\b/i.test(c)) return 'listing';
   if (/^(?:docker(?:\s+compose)?|kubectl|terraform|journalctl)\b/.test(c)) {
     return /\b(logs?|events?)\b/.test(c) ? 'logs' : 'summary';
   }

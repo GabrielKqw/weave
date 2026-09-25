@@ -129,6 +129,23 @@ test('shouldWrap excludes background commands and empty/missing commands', () =>
   assert.equal(execCore.shouldWrap({}), false);
   assert.equal(execCore.shouldWrap({ command: '' }), false);
   assert.equal(execCore.shouldWrap({ command: 'git status' }), true);
+  assert.equal(execCore.shouldWrap({ CommandLine: 'git status' }), true);
+  assert.equal(execCore.shouldWrap({ CommandLine: 'node "C:\\weave\\cli\\weave.js" exec -- git status' }), false);
+  assert.equal(execCore.shouldWrap({ CommandLine: '$env:WEAVE_WRAPPED="1"; node weave.js exec -- git status' }), false);
+});
+
+test('buildWrappedCommand supports powershell shell target', () => {
+  const wrapped = execCore.buildWrappedCommand('git status', 'C:\\weave\\cli\\weave.js', 'C:\\repo', { shell: 'powershell' });
+  assert.ok(wrapped.startsWith('$env:WEAVE_WRAPPED="1"; node'));
+  assert.ok(wrapped.includes('--shell powershell'));
+  assert.ok(wrapped.includes("--cwd 'C:\\repo'"));
+  assert.ok(wrapped.includes('--b64'));
+});
+
+test('runCommand with shell powershell executes via PowerShell on Windows', { skip: process.platform !== 'win32' }, () => {
+  const result = execCore.runCommand('Write-Output "ps-output-check"', { shell: 'powershell' });
+  assert.equal(result.exitCode, 0);
+  assert.ok(result.stdout.includes('ps-output-check'));
 });
 
 test('shouldWrap excludes commands beyond the safety length cap', () => {

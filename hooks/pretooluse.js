@@ -27,10 +27,32 @@ function main() {
     return;
   }
 
-  if (hasCodexEnv() || process.env.ANTIGRAVITY_SESSION_ID) {
+  // Antigravity (Google / Gemini) hook protocol
+  if (input.toolCall && input.toolCall.name === 'run_command') {
+    const execCore = require('../core/exec');
+    const args = input.toolCall.args || {};
+    const command = args.CommandLine;
+    if (!execCore.shouldWrap({ command })) {
+      process.stdout.write(JSON.stringify({ decision: 'allow' }));
+      return;
+    }
+    const weaveJsPath = path.join(__dirname, '..', 'cli', 'weave.js');
+    const cwd = args.Cwd || (Array.isArray(input.workspacePaths) && input.workspacePaths[0]) || process.cwd();
+    const targetShell = process.platform === 'win32' ? 'powershell' : 'bash';
+    const wrapped = execCore.buildWrappedCommand(command, weaveJsPath, cwd, { shell: targetShell });
+    const output = {
+      decision: 'allow',
+      overwrite: {
+        CommandLine: wrapped,
+      },
+    };
+    process.stdout.write(JSON.stringify(output));
     return;
   }
-  if (input.toolCall?.name === 'run_command' || input.tool_name === 'run_command') return;
+
+  if (hasCodexEnv()) {
+    return;
+  }
   if (input.hook_event_name !== 'PreToolUse') return;
   if (input.tool_name !== 'Bash') return;
 

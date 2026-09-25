@@ -12,10 +12,9 @@ function runHook(inputObj, env = {}) {
   const input = typeof inputObj === 'string' ? inputObj : JSON.stringify(inputObj);
   const cleanEnv = { ...process.env };
   for (const key of Object.keys(cleanEnv)) {
-    if (key.startsWith('CODEX_')) delete cleanEnv[key];
+    if (key.startsWith('CODEX_') || key.startsWith('ANTIGRAVITY_')) delete cleanEnv[key];
   }
   delete cleanEnv.OPENAI_CLI_MODEL;
-  delete cleanEnv.ANTIGRAVITY_SESSION_ID;
   return spawnSync('node', [HOOK_PATH], { input, encoding: 'utf8', env: { ...cleanEnv, ...env } });
 }
 
@@ -137,3 +136,42 @@ test('hook preserves a Windows path embedded in the original command', () => {
   const cmd = out.hookSpecificOutput.updatedInput.command;
   assert.ok(cmd.includes('C:\\Users\\user\\Desktop\\Projects\\Weave\\README.md'));
 });
+
+test('hook Antigravity protocol: rewrites an eligible run_command with overwrite payload', () => {
+  const result = runHook({
+    conversationId: 'conv-123',
+    workspacePaths: ['C:\\Users\\user\\Desktop\\Projects\\Weave'],
+    toolCall: {
+      name: 'run_command',
+      args: { CommandLine: 'git status', Cwd: 'C:\\Users\\user\\Desktop\\Projects\\Weave' },
+    },
+  });
+  assert.equal(result.status, 0);
+  const out = JSON.parse(result.stdout);
+  assert.equal(out.decision, 'allow');
+  assert.ok(out.overwrite);
+  assert.ok(out.overwrite.CommandLine.includes('weave.js'));
+  assert.ok(out.overwrite.CommandLine.includes('exec'));
+  if (out.overwrite.CommandLine.includes('--b64')) {
+    const match = out.overwrite.CommandLine.match(/--b64\s+([A-Za-z0-9+/=]+)/);
+    assert.ok(match);
+    assert.equal(Buffer.from(match[1], 'base64').toString('utf8'), 'git status');
+  } else {
+    assert.ok(out.overwrite.CommandLine.includes('git status'));
+  }
+});
+
+test('hook Antigravity protocol: does not rewrite an already wrapped command', () => {
+  const already = '$env:WEAVE_WRAPPED="1"; node "C:\\weave\\cli\\weave.js" exec -- git status';
+  const result = runHook({
+    toolCall: {
+      name: 'run_command',
+      args: { CommandLine: already },
+    },
+  });
+  assert.equal(result.status, 0);
+  const out = JSON.parse(result.stdout);
+  assert.equal(out.decision, 'allow');
+  assert.equal(out.overwrite, undefined);
+});
+

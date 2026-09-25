@@ -110,10 +110,9 @@ test('weave doctor --agent=antigravity reports bash as warn/optional instead of 
 function cleanAgentEnv() {
   const env = { ...process.env };
   for (const key of Object.keys(env)) {
-    if (key.startsWith('CODEX_')) delete env[key];
+    if (key.startsWith('CODEX_') || key.startsWith('ANTIGRAVITY_')) delete env[key];
   }
   delete env.OPENAI_CLI_MODEL;
-  delete env.ANTIGRAVITY_SESSION_ID;
   delete env.WEAVE_AGENT;
   return env;
 }
@@ -136,13 +135,23 @@ test('weave doctor detects codex via OPENAI_CLI_MODEL', () => {
   assert.match(result.stdout, /detected agent - codex/);
 });
 
-test('weave doctor gives ANTIGRAVITY_SESSION_ID precedence over Codex env vars', () => {
+test('weave doctor gives ANTIGRAVITY_AGENT precedence over Codex env vars', () => {
   const result = runDoctor({
-    ANTIGRAVITY_SESSION_ID: 'session-123',
+    ANTIGRAVITY_AGENT: '1',
     CODEX_MANAGED_PACKAGE_ROOT: 'C:\\codex\\pkg',
     OPENAI_CLI_MODEL: 'gpt-5.4-codex',
   });
   assert.match(result.stdout, /detected agent - antigravity/);
   assert.doesNotMatch(result.stdout, /detected agent - codex/);
 });
+
+test('weave doctor detects antigravity via ANTIGRAVITY_CONVERSATION_ID', () => {
+  const result = runDoctor({
+    ANTIGRAVITY_CONVERSATION_ID: 'conv-abc-123',
+    OPENAI_CLI_MODEL: 'gpt-5.4-codex',
+  });
+  assert.match(result.stdout, /detected agent - antigravity/);
+  assert.doesNotMatch(result.stdout, /detected agent - codex/);
+});
+
 

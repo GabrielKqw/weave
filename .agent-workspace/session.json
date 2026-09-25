@@ -1,0 +1,15 @@
+{
+  "id": "4fb3764e-fe77-4903-a133-dd28852d41f2",
+  "projectDir": "C:\\Users\\Admin\\Desktop\\Projetos\\Weave",
+  "createdAt": "2026-09-21T18:35:00.501Z",
+  "updatedAt": "2026-09-21T18:36:26.323Z",
+  "mode": "manual",
+  "unmentionedMessagePolicy": "active-agent",
+  "memory": {
+    "updatedAt": "2026-09-21T18:35:00.501Z",
+    "summary": "",
+    "openQuestions": []
+  },
+  "agentTracks": {},
+  "activeAgentId": "gemini"
+}

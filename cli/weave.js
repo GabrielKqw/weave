@@ -15,6 +15,25 @@ const PLUGIN_ROOT = path.join(__dirname, '..');
 
 function cmdExec(argv) {
   let cwd;
+  let shell =
+    process.platform === 'win32' &&
+    (process.env.ANTIGRAVITY_AGENT ||
+      process.env.ANTIGRAVITY_CONVERSATION_ID ||
+      process.env.ANTIGRAVITY_APP_DATA_DIR)
+      ? 'powershell'
+      : 'bash';
+
+  const shellIdx = argv.indexOf('--shell');
+  if (shellIdx !== -1) {
+    shell = argv[shellIdx + 1];
+    if (!shell || shell.startsWith('-')) {
+      process.stderr.write('weave exec: --shell requires a shell name (e.g. bash or powershell)\n');
+      process.exitCode = 2;
+      return;
+    }
+    argv = [...argv.slice(0, shellIdx), ...argv.slice(shellIdx + 2)];
+  }
+
   const cwdIdx = argv.indexOf('--cwd');
   if (cwdIdx !== -1) {
     cwd = argv[cwdIdx + 1];
@@ -32,14 +51,20 @@ function cmdExec(argv) {
     }
     argv = [...argv.slice(0, cwdIdx), ...argv.slice(cwdIdx + 2)];
   }
-  const dashIdx = argv.indexOf('--');
-  const command = dashIdx === -1 ? argv.join(' ') : argv.slice(dashIdx + 1).join(' ');
-  if (!command.trim()) {
+  let command;
+  const b64Idx = argv.indexOf('--b64');
+  if (b64Idx !== -1) {
+    command = Buffer.from(argv[b64Idx + 1] || '', 'base64').toString('utf8');
+  } else {
+    const dashIdx = argv.indexOf('--');
+    command = dashIdx === -1 ? argv.join(' ') : argv.slice(dashIdx + 1).join(' ');
+  }
+  if (!command || !command.trim()) {
     process.stderr.write('weave exec: no command given (usage: weave exec -- <command>)\n');
     process.exitCode = 2;
     return;
   }
-  const report = execCore.execAndReport(command, { cwd: cwd || process.cwd() });
+  const report = execCore.execAndReport(command, { cwd: cwd || process.cwd(), shell });
   if (report.passthrough) {
     process.stdout.write(report.presentedStdout);
     process.stderr.write(report.presentedStderr);
@@ -178,7 +203,14 @@ function detectAgent(argv = []) {
     if (arg.startsWith('--agent=')) return arg.slice(8).toLowerCase();
     if (arg === 'antigravity' || arg === 'codex' || arg === 'claude') return arg;
   }
-  if (process.env.ANTIGRAVITY_SESSION_ID) return 'antigravity';
+  if (
+    process.env.ANTIGRAVITY_AGENT ||
+    process.env.ANTIGRAVITY_CONVERSATION_ID ||
+    process.env.ANTIGRAVITY_SESSION_ID ||
+    process.env.ANTIGRAVITY_APP_DATA_DIR
+  ) {
+    return 'antigravity';
+  }
   if (hasCodexEnv()) return 'codex';
   if (process.env.WEAVE_AGENT) return process.env.WEAVE_AGENT.toLowerCase();
   return null;
